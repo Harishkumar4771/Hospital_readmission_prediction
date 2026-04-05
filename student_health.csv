@@ -5,3 +5,7 @@ date,uhid,gender,hb,rbc,platelets,bile,pus,crystals,glucose,abnormal_count,recom
 2026-04-05 14:12,SUHRC02000409385,Female,12.9,4.41,344,Negative,Occasional,Absent,Negative,0,All Clear
 2026-04-05 14:54,SUHRC02000410089,Male,15.6,5.07,309,Negative,Occasional,Absent,Negative,0,All Clear
 2026-04-05 15:17,SUHRC01000410224,Male,14,5.41,217,Negative,Occasional,Absent,Negative,0,All Clear
+2026-04-05 15:57,SUHRC01000410224,Male,14,5.41,217,Negative,Occasional,Absent,Negative,0,All Clear
+2026-04-05 15:59,SUHRC01000419358,Male,16.3,5.77,311,Negative,Occasional,Absent,Negative,1,Monitor / Retest
+2026-04-05 16:00,SUHRC0369480,Male,14.3,5.07,150,Negative,Occasional,Absent,Negative,0,All Clear
+2026-04-05 16:00,SUHRC02000409351,Female,13.1,4.82,356,Negative,Occasional,Absent,Negative,1,Monitor / Retest

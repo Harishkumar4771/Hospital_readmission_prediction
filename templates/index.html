@@ -1071,7 +1071,6 @@
     }
 
     function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-    }, 500);
 
     // ── Model bar animation ───────────────────────
     const barObserver = new IntersectionObserver((entries) => {
@@ -1133,7 +1132,16 @@
         const y = mid + ekgY(xShifted, segW) * amp;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
-   
+      ctx.stroke();
+    }
+
+    function animateEKG() {
+      offset += 2;
+      drawEKG();
+      requestAnimationFrame(animateEKG);
+    }
+    animateEKG();
+
     // ── Fallback reveal (safety net for all browsers) ──
     setTimeout(() => {
       document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
