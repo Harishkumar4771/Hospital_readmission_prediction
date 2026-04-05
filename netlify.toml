@@ -1,23 +1,18 @@
 [build]
   command = "pip install -r requirements.txt"
   functions = "functions"
-  publish = "public"
+  publish = "."
 
 [functions]
   directory = "functions"
-  node_bundler = "esbuild"
-  external_node_modules = ["pandas", "numpy", "scikit-learn", "xgboost", "lightgbm"]
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/app/:splat"
-  status = 200
+  python_version = "3.11"
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/.netlify/functions/server"
   status = 200
 
 [dev]
   command = "python app.py"
   port = 5000
+  autolaunch = false

@@ -10,3 +10,4 @@ flask
 joblib
 requests
 anthropic
+gunicorn
