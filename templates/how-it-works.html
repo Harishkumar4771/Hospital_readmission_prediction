@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedPredict — How It Works</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080D1A; --bg2: #0D1426; --bg3: #121A30;
+      --surface: #1A2338; --surface2: #1F2B42;
+      --border: rgba(255,255,255,0.07);
+      --teal: #00D4A8; --teal-dim: rgba(0,212,168,0.10); --teal-glow: rgba(0,212,168,0.2);
+      --white: #F0F4FF; --muted: rgba(240,244,255,0.5); --muted2: rgba(240,244,255,0.3);
+      --danger: #FF6B6B; --warning: #F5C842; --success: #4ADE80; --purple: #A78BFA;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+      --nav-h: 68px; --radius: 12px;
+      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--white); line-height: 1.6; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 2px; }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: rgba(8,13,26,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; }
+    .nav-logo-icon { width: 34px; height: 34px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--bg); font-size: 16px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.875rem; font-weight: 500; padding: 8px 14px; border-radius: 8px; transition: var(--transition); }
+    .nav-links a:hover { color: var(--white); background: var(--border); }
+    .nav-links a.active { color: var(--teal); }
+    .nav-cta { background: var(--teal) !important; color: var(--bg) !important; font-weight: 600 !important; }
+    .nav-cta:hover { background: #00f0c0 !important; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+    .mobile-menu { display: none; position: fixed; top: var(--nav-h); left: 0; right: 0; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; z-index: 999; flex-direction: column; gap: 4px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { text-decoration: none; color: var(--muted); font-size: 0.95rem; font-weight: 500; padding: 12px 16px; border-radius: 8px; transition: var(--transition); }
+    .mobile-menu a:hover { color: var(--white); background: var(--border); }
+
+    /* HERO */
+    .page-hero { padding: calc(var(--nav-h) + 70px) 80px 70px; text-align: center; position: relative; }
+    .page-hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(0,212,168,0.1) 1px, transparent 1px); background-size: 32px 32px; mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, transparent 100%); pointer-events: none; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--teal); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+    .eyebrow::before { content: ''; display: block; width: 20px; height: 2px; background: var(--teal); border-radius: 2px; }
+    .page-hero h1 { font-family: var(--font-serif); font-size: clamp(2.2rem, 4vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 16px; }
+    .page-hero p { color: var(--muted); font-size: 1rem; max-width: 580px; margin: 0 auto; line-height: 1.8; }
+
+    /* PIPELINE FLOW */
+    .pipeline-section { padding: 80px; }
+    .pipeline-flow { display: flex; align-items: center; gap: 0; overflow-x: auto; padding-bottom: 12px; margin-bottom: 60px; }
+    .pipeline-node { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; text-align: center; min-width: 150px; transition: var(--transition); }
+    .pipeline-node:hover { border-color: rgba(0,212,168,0.3); transform: translateY(-3px); }
+    .pipeline-node-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 18px; }
+    .pipeline-node h4 { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; }
+    .pipeline-node p { font-size: 0.73rem; color: var(--muted2); line-height: 1.5; }
+    .pipeline-arrow { flex-shrink: 0; padding: 0 8px; color: var(--teal); font-size: 16px; opacity: 0.5; }
+
+    /* DETAIL SECTIONS */
+    .detail-section { padding: 0 80px 80px; }
+    .section-header { margin-bottom: 48px; }
+    .section-header .eyebrow { justify-content: flex-start; }
+    .section-header h2 { font-family: var(--font-serif); font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .section-header p { color: var(--muted); font-size: 0.95rem; max-width: 580px; line-height: 1.75; }
+
+    /* FEATURES USED */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; align-items: flex-start; gap: 14px; transition: var(--transition); }
+    .feat-card:hover { border-color: rgba(0,212,168,0.2); }
+    .feat-card-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .feat-card-body h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 4px; }
+    .feat-card-body p { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+    .feat-badge { display: inline-block; font-size: 0.68rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .feat-badge.original { background: rgba(0,212,168,0.12); color: var(--teal); }
+    .feat-badge.engineered { background: rgba(167,139,250,0.12); color: var(--purple); }
+
+    /* MODELS SECTION */
+    .models-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
+    .model-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; transition: var(--transition); position: relative; overflow: hidden; }
+    .model-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; opacity: 0; transition: var(--transition); }
+    .model-card.lr::before  { background: var(--teal); }
+    .model-card.rf::before  { background: var(--success); }
+    .model-card.xgb::before { background: var(--warning); }
+    .model-card:hover { transform: translateY(-4px); }
+    .model-card:hover::before { opacity: 1; }
+    .model-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .model-card-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .model-card-icon.lr  { background: var(--teal-dim); color: var(--teal); }
+    .model-card-icon.rf  { background: rgba(74,222,128,0.1); color: var(--success); }
+    .model-card-icon.xgb { background: rgba(245,200,66,0.1); color: var(--warning); }
+    .model-card h3 { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; }
+    .model-card-sub { font-size: 0.75rem; color: var(--muted2); }
+    .model-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.7; margin-bottom: 16px; }
+    .model-weight { display: flex; align-items: center; gap: 8px; }
+    .model-weight-label { font-size: 0.75rem; color: var(--muted2); }
+    .model-weight-dots { display: flex; gap: 4px; }
+    .model-weight-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--surface2); }
+    .model-weight-dot.active.lr  { background: var(--teal); }
+    .model-weight-dot.active.rf  { background: var(--success); }
+    .model-weight-dot.active.xgb { background: var(--warning); }
+
+    /* VOTING DIAGRAM */
+    .voting-diagram { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 36px; margin-bottom: 40px; }
+    .voting-title { font-size: 0.78rem; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 28px; }
+    .voting-flow { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+    .v-inputs { display: flex; flex-direction: column; gap: 12px; }
+    .v-input { display: flex; align-items: center; gap: 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; }
+    .v-input .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .v-arrow-group { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0 24px; }
+    .v-arrow { color: var(--teal); opacity: 0.5; font-size: 14px; }
+    .v-ensemble { background: var(--teal-dim); border: 1px solid rgba(0,212,168,0.3); border-radius: 12px; padding: 20px 28px; text-align: center; }
+    .v-ensemble h4 { font-family: var(--font-serif); font-size: 1rem; font-weight: 700; color: var(--teal); margin-bottom: 6px; }
+    .v-ensemble p { font-size: 0.78rem; color: var(--muted); }
+    .v-arrow-right { padding: 0 24px; color: var(--teal); font-size: 18px; }
+    .v-output { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; text-align: center; }
+    .v-output h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+    .v-output p { font-size: 0.78rem; color: var(--muted2); }
+    .v-output .prob-display { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 700; color: var(--teal); margin: 8px 0; }
+
+    /* THRESHOLD SECTION */
+    .threshold-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+    .threshold-explanation h3 { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600; margin-bottom: 12px; }
+    .threshold-explanation p { color: var(--muted); font-size: 0.9rem; line-height: 1.75; margin-bottom: 16px; }
+    .threshold-visual { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
+    .th-scale { position: relative; height: 40px; background: linear-gradient(90deg, var(--success), var(--warning) 42%, var(--danger)); border-radius: 6px; margin: 20px 0 8px; }
+    .th-marker { position: absolute; top: -8px; transform: translateX(-50%); }
+    .th-marker-line { width: 3px; height: 56px; background: var(--white); border-radius: 2px; margin: 0 auto; }
+    .th-marker-label { white-space: nowrap; font-size: 0.75rem; font-weight: 600; color: var(--white); background: var(--bg); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; text-align: center; margin-top: 4px; }
+    .th-scale-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted2); }
+    .th-result-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .th-result-row:last-child { border-bottom: none; }
+    .th-result-label { font-size: 0.82rem; color: var(--muted); }
+    .th-result-val { font-size: 0.875rem; font-weight: 600; }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-d1 { transition-delay: 0.1s; }
+    .reveal-d2 { transition-delay: 0.2s; }
+
+    /* DIVIDER */
+    .section-divider { height: 1px; background: var(--border); margin: 0 80px; }
+
+    /* CTA */
+    .cta-strip { background: var(--bg2); border-top: 1px solid var(--border); padding: 60px 80px; text-align: center; }
+    .cta-strip h2 { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700; margin-bottom: 12px; }
+    .cta-strip p { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--teal); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 12px 28px; border-radius: var(--radius); transition: var(--transition); }
+    .btn-primary:hover { background: #00f0c0; transform: translateY(-2px); }
+
+    @media (max-width: 1024px) {
+      .pipeline-section, .detail-section { padding: 60px 40px; }
+      .section-divider { margin: 0 40px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .models-grid { grid-template-columns: 1fr; }
+      .threshold-grid { grid-template-columns: 1fr; }
+      .cta-strip { padding: 48px 40px; }
+    }
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .page-hero { padding: calc(var(--nav-h) + 40px) 24px 40px; }
+      .pipeline-section, .detail-section { padding: 48px 24px; }
+      .section-divider { margin: 0 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .cta-strip { padding: 48px 24px; }
+      .voting-flow { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      MedPredict
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/predictor">Predictor</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/how-it-works" class="active">How It Works</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/team">Team</a></li>
+      <li><a href="/predictor" class="nav-cta">Run Prediction</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a><a href="/predictor">Predictor</a><a href="/about">About</a>
+    <a href="/how-it-works">How It Works</a><a href="/dashboard">Dashboard</a><a href="/history">History</a><a href="/team">Team</a>
+  </div>
+
+  <!-- HERO -->
+  <div class="page-hero">
+    <div class="eyebrow">Technical Deep Dive</div>
+    <h1>From raw data to<br>clinical risk score.</h1>
+    <p>A step-by-step walkthrough of every stage in the MedPredict pipeline — from data preprocessing through model ensembling to threshold-tuned output.</p>
+  </div>
+
+  <!-- PIPELINE FLOW -->
+  <div class="pipeline-section">
+    <div class="pipeline-flow">
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(0,212,168,0.1);color:var(--teal);"><i class="fa-solid fa-database"></i></div>
+        <h4>Raw Data</h4>
+        <p>25,000 hospital admission records</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(167,139,250,0.1);color:var(--purple);"><i class="fa-solid fa-broom"></i></div>
+        <h4>Cleaning</h4>
+        <p>Dedup, null check, type casting</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(245,200,66,0.1);color:var(--warning);"><i class="fa-solid fa-wrench"></i></div>
+        <h4>Feature Eng.</h4>
+        <p>5 derived clinical features</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(255,107,107,0.1);color:var(--danger);"><i class="fa-solid fa-scissors"></i></div>
+        <h4>Outlier Cap</h4>
+        <p>IQR-based Winsorization</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(74,222,128,0.1);color:var(--success);"><i class="fa-solid fa-code-branch"></i></div>
+        <h4>Encoding</h4>
+        <p>One-hot for categoricals</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(0,212,168,0.1);color:var(--teal);"><i class="fa-solid fa-ruler"></i></div>
+        <h4>Scaling</h4>
+        <p>StandardScaler (μ=0, σ=1)</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(167,139,250,0.1);color:var(--purple);"><i class="fa-solid fa-brain"></i></div>
+        <h4>Ensemble</h4>
+        <p>Soft voting LR+RF+XGB</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node">
+        <div class="pipeline-node-icon" style="background:rgba(245,200,66,0.1);color:var(--warning);"><i class="fa-solid fa-sliders"></i></div>
+        <h4>Threshold</h4>
+        <p>0.42 tuned for recall</p>
+      </div>
+      <div class="pipeline-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      <div class="pipeline-node" style="border-color:rgba(0,212,168,0.3);background:var(--teal-dim);">
+        <div class="pipeline-node-icon" style="background:rgba(0,212,168,0.2);color:var(--teal);"><i class="fa-solid fa-shield-halved"></i></div>
+        <h4>Risk Output</h4>
+        <p>Low / Moderate / High</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- FEATURES -->
+  <div class="detail-section" style="padding-top:80px;">
+    <div class="section-header reveal">
+      <div class="eyebrow">Step 2 & 3</div>
+      <h2>Feature engineering.</h2>
+      <p>The raw dataset has 16 columns. After preprocessing, the model operates on 54 features — 13 original numeric fields, 5 newly engineered features, and 36 one-hot encoded columns from 8 categorical variables.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feat-card reveal">
+        <div class="feat-card-icon" style="background:rgba(0,212,168,0.1);color:var(--teal);"><i class="fa-solid fa-user"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge original">Original</div>
+          <h4>Age (mapped)</h4>
+          <p>Age ranges converted to midpoint numerics: [60-70) → 65. Enables ordinal relationship for linear models.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal reveal-d1">
+        <div class="feat-card-icon" style="background:rgba(0,212,168,0.1);color:var(--teal);"><i class="fa-solid fa-calendar-days"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge original">Original</div>
+          <h4>Time in Hospital</h4>
+          <p>Days admitted. Longer stays correlate with severity. Also used as denominator for meds-per-day.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal reveal-d2">
+        <div class="feat-card-icon" style="background:rgba(0,212,168,0.1);color:var(--teal);"><i class="fa-solid fa-pills"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge original">Original</div>
+          <h4>n_medications</h4>
+          <p>Count of medications prescribed. High counts (≥5) trigger polypharmacy flag. Strong predictor of complexity.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-card-icon" style="background:rgba(167,139,250,0.12);color:var(--purple);"><i class="fa-solid fa-sigma"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge engineered">Engineered</div>
+          <h4>total_visits</h4>
+          <p>n_inpatient + n_outpatient + n_emergency. Summarises overall healthcare utilisation in a single signal.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal reveal-d1">
+        <div class="feat-card-icon" style="background:rgba(167,139,250,0.12);color:var(--purple);"><i class="fa-solid fa-weight-scale"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge engineered">Engineered</div>
+          <h4>visit_severity</h4>
+          <p>3×inpatient + 2×emergency + 1×outpatient. Weighted score reflecting acuity of prior healthcare interactions.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal reveal-d2">
+        <div class="feat-card-icon" style="background:rgba(167,139,250,0.12);color:var(--purple);"><i class="fa-solid fa-capsules"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge engineered">Engineered</div>
+          <h4>polypharmacy</h4>
+          <p>Binary flag (1 if n_medications ≥ 5). Polypharmacy is clinically significant and linked to higher readmission rates.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-card-icon" style="background:rgba(167,139,250,0.12);color:var(--purple);"><i class="fa-solid fa-divide"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge engineered">Engineered</div>
+          <h4>meds_per_day</h4>
+          <p>n_medications / time_in_hospital. Captures treatment intensity relative to stay duration.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal reveal-d1">
+        <div class="feat-card-icon" style="background:rgba(167,139,250,0.12);color:var(--purple);"><i class="fa-solid fa-bed-pulse"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge engineered">Engineered</div>
+          <h4>long_stay</h4>
+          <p>Binary flag (1 if time_in_hospital &gt; 7 days). Prolonged stays indicate medical complexity and higher risk.</p>
+        </div>
+      </div>
+      <div class="feat-card reveal reveal-d2">
+        <div class="feat-card-icon" style="background:rgba(0,212,168,0.1);color:var(--teal);"><i class="fa-solid fa-list-ul"></i></div>
+        <div class="feat-card-body">
+          <div class="feat-badge original">One-Hot</div>
+          <h4>Categorical columns (×8)</h4>
+          <p>medical_specialty, diag_1/2/3, glucose_test, A1Ctest, change, diabetes_med — expanded to 36 binary columns.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- MODELS -->
+  <div class="detail-section" style="padding-top:80px;">
+    <div class="section-header reveal">
+      <div class="eyebrow">Step 5</div>
+      <h2>Three models, one decision.</h2>
+      <p>Each model brings a different strength. Logistic Regression is fast and interpretable. Random Forest captures complex non-linear patterns. XGBoost uses sequential boosting to reduce prediction error. Together, they outperform any single model.</p>
+    </div>
+
+    <div class="models-grid">
+      <div class="model-card lr reveal">
+        <div class="model-card-head">
+          <div class="model-card-icon lr"><i class="fa-solid fa-arrow-trend-up"></i></div>
+          <div>
+            <h3>Logistic Regression</h3>
+            <div class="model-card-sub">Linear baseline</div>
+          </div>
+        </div>
+        <p>Draws a decision boundary by fitting a sigmoid function to the data. Despite its simplicity, it provides an interpretable baseline and captures linear relationships between features and readmission.</p>
+        <div class="model-weight">
+          <span class="model-weight-label">Ensemble weight:</span>
+          <div class="model-weight-dots">
+            <div class="model-weight-dot active lr"></div>
+            <div class="model-weight-dot"></div>
+          </div>
+          <span style="font-size:0.78rem;color:var(--teal);">1×</span>
+        </div>
+      </div>
+
+      <div class="model-card rf reveal reveal-d1">
+        <div class="model-card-head">
+          <div class="model-card-icon rf"><i class="fa-solid fa-tree"></i></div>
+          <div>
+            <h3>Random Forest</h3>
+            <div class="model-card-sub">Bagging ensemble</div>
+          </div>
+        </div>
+        <p>Builds 250 independent decision trees, each trained on a random subset of features and samples. Majority vote across trees reduces variance and handles non-linear feature interactions well.</p>
+        <div class="model-weight">
+          <span class="model-weight-label">Ensemble weight:</span>
+          <div class="model-weight-dots">
+            <div class="model-weight-dot active rf"></div>
+            <div class="model-weight-dot"></div>
+          </div>
+          <span style="font-size:0.78rem;color:var(--success);">1×</span>
+        </div>
+      </div>
+
+      <div class="model-card xgb reveal reveal-d2">
+        <div class="model-card-head">
+          <div class="model-card-icon xgb"><i class="fa-solid fa-bolt"></i></div>
+          <div>
+            <h3>XGBoost</h3>
+            <div class="model-card-sub">Gradient boosting</div>
+          </div>
+        </div>
+        <p>Builds trees sequentially — each new tree focuses on correcting the residual errors of the previous one. Regularisation (gamma, alpha, lambda) prevents overfitting. Given double weight in the ensemble due to superior recall.</p>
+        <div class="model-weight">
+          <span class="model-weight-label">Ensemble weight:</span>
+          <div class="model-weight-dots">
+            <div class="model-weight-dot active xgb"></div>
+            <div class="model-weight-dot active xgb"></div>
+          </div>
+          <span style="font-size:0.78rem;color:var(--warning);">2×</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voting diagram -->
+    <div class="voting-diagram reveal">
+      <div class="voting-title">Soft Voting — How Probabilities Are Combined</div>
+      <div class="voting-flow">
+        <div class="v-inputs">
+          <div class="v-input"><div class="dot" style="background:var(--teal);"></div> LR → P(readmit) = 0.51 <span style="font-size:0.72rem;color:var(--muted2);margin-left:8px;">weight 1</span></div>
+          <div class="v-input"><div class="dot" style="background:var(--success);"></div> RF → P(readmit) = 0.44 <span style="font-size:0.72rem;color:var(--muted2);margin-left:8px;">weight 1</span></div>
+          <div class="v-input"><div class="dot" style="background:var(--warning);"></div> XGB → P(readmit) = 0.48 <span style="font-size:0.72rem;color:var(--muted2);margin-left:8px;">weight 2</span></div>
+        </div>
+        <div class="v-arrow-group">
+          <div class="v-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="v-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+          <div class="v-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+        <div class="v-ensemble">
+          <h4>Weighted Average</h4>
+          <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;">(0.51×1 + 0.44×1 + 0.48×2) ÷ 4</p>
+          <div style="font-family:var(--font-serif);font-size:1.4rem;color:var(--teal);font-weight:700;margin-top:8px;">= 0.4775</div>
+        </div>
+        <div class="v-arrow-right"><i class="fa-solid fa-chevron-right"></i></div>
+        <div class="v-output">
+          <h4>vs Threshold 0.42</h4>
+          <div class="prob-display">0.4775 ≥ 0.42</div>
+          <p>→ Predict <strong style="color:var(--danger);">Readmitted</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- THRESHOLD -->
+  <div class="detail-section" style="padding-top:80px;">
+    <div class="section-header reveal">
+      <div class="eyebrow">Step 6</div>
+      <h2>Threshold tuning.</h2>
+    </div>
+
+    <div class="threshold-grid">
+      <div class="threshold-explanation reveal">
+        <h3>Why 0.42 and not 0.50?</h3>
+        <p>By default, a classifier predicts "readmitted" if the probability exceeds 0.50. But 0.50 is arbitrary — it was never calibrated to the clinical cost of being wrong.</p>
+        <p>In healthcare, a false negative — predicting a high-risk patient as safe — is far more dangerous than a false positive. A missed high-risk patient may deteriorate and return in a worse condition, often to the ICU.</p>
+        <p>We evaluated every threshold from 0.30 to 0.70 in 0.01 steps on the validation set, measuring recall and accuracy at each point. At <strong style="color:var(--teal);">threshold = 0.42</strong>, recall on the readmitted class jumped to 75% while accuracy stayed around 60% — an acceptable clinical trade-off.</p>
+        <p style="padding:14px;background:var(--bg2);border:1px solid rgba(0,212,168,0.2);border-radius:8px;font-size:0.85rem;">
+          <strong style="color:var(--teal);">Key insight:</strong> Lowering the threshold doesn't change the model — it changes the decision rule. The model still outputs the same probabilities. You're just saying "flag anyone above 42% as high-risk" instead of 50%.
+        </p>
+      </div>
+
+      <div class="threshold-visual reveal reveal-d1">
+        <div style="font-size:0.78rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:16px;">Threshold Scale</div>
+        <div class="th-scale">
+          <div class="th-marker" style="left:42%;">
+            <div class="th-marker-line"></div>
+            <div class="th-marker-label">0.42 ← chosen</div>
+          </div>
+        </div>
+        <div class="th-scale-labels">
+          <span>0.0</span><span>0.25</span><span>0.50</span><span>0.75</span><span>1.0</span>
+        </div>
+        <div style="margin-top:28px;">
+          <div class="th-result-row">
+            <span class="th-result-label">Overall Accuracy</span>
+            <span class="th-result-val" style="color:var(--teal);">60.0%</span>
+          </div>
+          <div class="th-result-row">
+            <span class="th-result-label">Recall — Readmitted class</span>
+            <span class="th-result-val" style="color:var(--success);">75.0%</span>
+          </div>
+          <div class="th-result-row">
+            <span class="th-result-label">Recall — Not readmitted</span>
+            <span class="th-result-val" style="color:var(--warning);">46.7%</span>
+          </div>
+          <div class="th-result-row">
+            <span class="th-result-label">ROC-AUC</span>
+            <span class="th-result-val">0.67</span>
+          </div>
+          <div class="th-result-row">
+            <span class="th-result-label">Baseline (majority class)</span>
+            <span class="th-result-val" style="color:var(--muted2);">53.0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-strip">
+    <h2>See it in action.</h2>
+    <p>Run a prediction and watch the full pipeline execute on real patient data.</p>
+    <a href="/predictor" class="btn-primary"><i class="fa-solid fa-stethoscope"></i> Open the Predictor</a>
+  </div>
+
+  <script>
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedPredict — Live Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080D1A; --bg2: #0D1426; --bg3: #121A30;
+      --surface: #1A2338;
+      --border: rgba(255,255,255,0.07);
+      --teal: #00D4A8; --teal-dim: rgba(0,212,168,0.10);
+      --white: #F0F4FF; --muted: rgba(240,244,255,0.5); --muted2: rgba(240,244,255,0.3);
+      --danger: #FF6B6B; --warning: #F5C842; --success: #4ADE80;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+      --nav-h: 68px; --radius: 12px;
+      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--white); line-height: 1.6; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 2px; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: rgba(8,13,26,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; }
+    .nav-logo-icon { width: 34px; height: 34px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--bg); font-size: 16px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.875rem; font-weight: 500; padding: 8px 14px; border-radius: 8px; transition: var(--transition); }
+    .nav-links a:hover { color: var(--white); background: var(--border); }
+    .nav-links a.active { color: var(--teal); }
+    .nav-cta { background: var(--teal) !important; color: var(--bg) !important; font-weight: 600 !important; }
+    .nav-cta:hover { background: #00f0c0 !important; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+    .mobile-menu { display: none; position: fixed; top: var(--nav-h); left: 0; right: 0; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; z-index: 999; flex-direction: column; gap: 4px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { text-decoration: none; color: var(--muted); font-size: 0.95rem; font-weight: 500; padding: 12px 16px; border-radius: 8px; transition: var(--transition); }
+
+    .page-hero { padding: calc(var(--nav-h) + 60px) 80px 50px; position: relative; }
+    .page-hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(0,212,168,0.08) 1px, transparent 1px); background-size: 32px 32px; mask-image: radial-gradient(ellipse 60% 60% at 30% 40%, black 20%, transparent 100%); pointer-events: none; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--teal); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+    .eyebrow::before { content: ''; display: block; width: 20px; height: 2px; background: var(--teal); border-radius: 2px; }
+    .page-hero h1 { font-family: var(--font-serif); font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .page-hero p { color: var(--muted); font-size: 0.95rem; max-width: 580px; line-height: 1.75; }
+
+    .demo-section { padding: 40px 80px 80px; }
+    .demo-tip { display: flex; align-items: center; gap: 12px; background: rgba(0,212,168,0.06); border: 1px solid rgba(0,212,168,0.15); border-radius: var(--radius); padding: 14px 20px; margin-bottom: 40px; font-size: 0.875rem; color: var(--muted); }
+    .demo-tip i { color: var(--teal); flex-shrink: 0; }
+
+    .demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+    .demo-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: var(--transition); }
+    .demo-card:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .demo-card-header { padding: 24px 28px 20px; border-bottom: 1px solid var(--border); }
+    .demo-card-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 600; margin-bottom: 14px; }
+    .demo-card-badge.high     { background: rgba(255,107,107,0.12); color: var(--danger);  border: 1px solid rgba(255,107,107,0.25); }
+    .demo-card-badge.moderate { background: rgba(245,200,66,0.12);  color: var(--warning); border: 1px solid rgba(245,200,66,0.25); }
+    .demo-card-badge.low      { background: rgba(74,222,128,0.12);  color: var(--success); border: 1px solid rgba(74,222,128,0.25); }
+    .demo-card h3 { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+    .demo-card .desc { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+    .demo-card-body { padding: 20px 28px; }
+    .demo-field-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.82rem; }
+    .demo-field-row:last-of-type { border-bottom: none; }
+    .demo-field-label { color: var(--muted2); }
+    .demo-field-val { font-weight: 500; color: var(--white); }
+    .demo-field-val.highlight { color: var(--danger); }
+    .demo-field-val.ok { color: var(--success); }
+
+    .demo-card-footer { padding: 20px 28px; border-top: 1px solid var(--border); }
+    .btn-run { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: var(--radius); border: none; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+    .btn-run.high     { background: rgba(255,107,107,0.15); color: var(--danger);  border: 1px solid rgba(255,107,107,0.3); }
+    .btn-run.moderate { background: rgba(245,200,66,0.12);  color: var(--warning); border: 1px solid rgba(245,200,66,0.3); }
+    .btn-run.low      { background: rgba(74,222,128,0.1);   color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+    .btn-run:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+    .btn-custom { display: inline-flex; align-items: center; gap: 10px; background: var(--teal); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 12px 28px; border-radius: var(--radius); margin-top: 48px; transition: var(--transition); border: none; cursor: pointer; }
+    .btn-custom:hover { background: #00f0c0; transform: translateY(-2px); }
+    .custom-cta { text-align: center; }
+    .custom-cta p { color: var(--muted); font-size: 0.875rem; margin-bottom: 8px; }
+
+    /* Hidden forms */
+    .hidden-form { display: none; }
+
+    @media (max-width: 1024px) {
+      .demo-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
+      .page-hero, .demo-section { padding-left: 40px; padding-right: 40px; }
+    }
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .page-hero { padding: calc(var(--nav-h) + 32px) 24px 32px; }
+      .demo-section { padding: 24px 24px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      MedPredict
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/predictor">Predictor</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/demo" class="active">Demo</a></li>
+      <li><a href="/team">Team</a></li>
+      <li><a href="/predictor" class="nav-cta">Run Prediction</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a><a href="/predictor">Predictor</a><a href="/about">About</a>
+    <a href="/dashboard">Dashboard</a><a href="/demo">Demo</a><a href="/team">Team</a>
+  </div>
+
+  <div class="page-hero">
+    <div class="eyebrow">Live Demonstration</div>
+    <h1>Three pre-built patient profiles.</h1>
+    <p>Click any patient below to instantly run a real prediction through the full ML pipeline — no form filling required. Perfect for demonstrating the system during Review 2.</p>
+  </div>
+
+  <div class="demo-section">
+    <div class="demo-tip">
+      <i class="fa-solid fa-circle-info"></i>
+      Each patient profile submits real data to the live prediction endpoint. Results include the AI-generated clinical summary, risk gauge, and radar chart.
+    </div>
+
+    <div class="demo-grid">
+
+      <!-- Patient 1: HIGH RISK -->
+      <div class="demo-card">
+        <div class="demo-card-header">
+          <div class="demo-card-badge high"><i class="fa-solid fa-circle" style="font-size:7px;"></i> High Risk</div>
+          <h3>Patient A — Mrs. Sharma</h3>
+          <p class="desc">76-year-old with circulatory disease, multiple prior admissions, and poorly controlled diabetes. Classic high-readmission profile.</p>
+        </div>
+        <div class="demo-card-body">
+          <div class="demo-field-row"><span class="demo-field-label">Age group</span><span class="demo-field-val">70–80</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Days in hospital</span><span class="demo-field-val highlight">9 days</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Medications</span><span class="demo-field-val highlight">18</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Prior inpatient visits</span><span class="demo-field-val highlight">3</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Primary diagnosis</span><span class="demo-field-val">Circulatory</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">A1C Test</span><span class="demo-field-val highlight">High</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Glucose Test</span><span class="demo-field-val highlight">High</span></div>
+        </div>
+        <div class="demo-card-footer">
+          <button class="btn-run high" onclick="runDemo('patientA')">
+            <i class="fa-solid fa-play"></i> Run This Prediction
+          </button>
+        </div>
+      </div>
+
+      <!-- Patient 2: MODERATE / EDGE CASE -->
+      <div class="demo-card">
+        <div class="demo-card-header">
+          <div class="demo-card-badge moderate"><i class="fa-solid fa-circle" style="font-size:7px;"></i> Moderate Risk</div>
+          <h3>Patient B — Mr. Patel</h3>
+          <p class="desc">65-year-old diabetic patient with a moderate hospital stay. Medication change during admission — one of the harder cases for the model to classify.</p>
+        </div>
+        <div class="demo-card-body">
+          <div class="demo-field-row"><span class="demo-field-label">Age group</span><span class="demo-field-val">60–70</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Days in hospital</span><span class="demo-field-val">5 days</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Medications</span><span class="demo-field-val">14</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Prior inpatient visits</span><span class="demo-field-val">1</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Primary diagnosis</span><span class="demo-field-val">Diabetes</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">A1C Test</span><span class="demo-field-val">Normal</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Medication change</span><span class="demo-field-val highlight">Yes</span></div>
+        </div>
+        <div class="demo-card-footer">
+          <button class="btn-run moderate" onclick="runDemo('patientB')">
+            <i class="fa-solid fa-play"></i> Run This Prediction
+          </button>
+        </div>
+      </div>
+
+      <!-- Patient 3: LOW RISK -->
+      <div class="demo-card">
+        <div class="demo-card-header">
+          <div class="demo-card-badge low"><i class="fa-solid fa-circle" style="font-size:7px;"></i> Low Risk</div>
+          <h3>Patient C — Ms. Joshi</h3>
+          <p class="desc">53-year-old with a short stay, low medication count, and no prior inpatient history. Standard discharge candidate.</p>
+        </div>
+        <div class="demo-card-body">
+          <div class="demo-field-row"><span class="demo-field-label">Age group</span><span class="demo-field-val">50–60</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Days in hospital</span><span class="demo-field-val ok">3 days</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Medications</span><span class="demo-field-val ok">6</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Prior inpatient visits</span><span class="demo-field-val ok">0</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Primary diagnosis</span><span class="demo-field-val">Respiratory</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">A1C Test</span><span class="demo-field-val ok">Not performed</span></div>
+          <div class="demo-field-row"><span class="demo-field-label">Glucose Test</span><span class="demo-field-val ok">Normal</span></div>
+        </div>
+        <div class="demo-card-footer">
+          <button class="btn-run low" onclick="runDemo('patientC')">
+            <i class="fa-solid fa-play"></i> Run This Prediction
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="custom-cta">
+      <p>Want to test with your own data?</p>
+      <a href="/predictor" class="btn-custom">
+        <i class="fa-solid fa-keyboard"></i> Use the Full Form
+      </a>
+    </div>
+  </div>
+
+  <!-- Hidden forms that directly POST to /predict -->
+  <form class="hidden-form" id="formPatientA" action="/predict" method="POST">
+    <input name="age"               value="[70-80)">
+    <input name="time_in_hospital"  value="9">
+    <input name="n_lab_procedures"  value="52">
+    <input name="n_procedures"      value="3">
+    <input name="n_medications"     value="18">
+    <input name="n_outpatient"      value="1">
+    <input name="n_inpatient"       value="3">
+    <input name="n_emergency"       value="1">
+    <input name="medical_specialty" value="InternalMedicine">
+    <input name="diag_1"            value="Circulatory">
+    <input name="diag_2"            value="Diabetes">
+    <input name="diag_3"            value="Circulatory">
+    <input name="glucose_test"      value="high">
+    <input name="A1Ctest"           value="high">
+    <input name="change"            value="yes">
+    <input name="diabetes_med"      value="yes">
+  </form>
+
+  <form class="hidden-form" id="formPatientB" action="/predict" method="POST">
+    <input name="age"               value="[60-70)">
+    <input name="time_in_hospital"  value="5">
+    <input name="n_lab_procedures"  value="38">
+    <input name="n_procedures"      value="2">
+    <input name="n_medications"     value="14">
+    <input name="n_outpatient"      value="0">
+    <input name="n_inpatient"       value="1">
+    <input name="n_emergency"       value="0">
+    <input name="medical_specialty" value="InternalMedicine">
+    <input name="diag_1"            value="Diabetes">
+    <input name="diag_2"            value="Circulatory">
+    <input name="diag_3"            value="Missing">
+    <input name="glucose_test"      value="normal">
+    <input name="A1Ctest"           value="normal">
+    <input name="change"            value="yes">
+    <input name="diabetes_med"      value="yes">
+  </form>
+
+  <form class="hidden-form" id="formPatientC" action="/predict" method="POST">
+    <input name="age"               value="[50-60)">
+    <input name="time_in_hospital"  value="3">
+    <input name="n_lab_procedures"  value="26">
+    <input name="n_procedures"      value="1">
+    <input name="n_medications"     value="6">
+    <input name="n_outpatient"      value="0">
+    <input name="n_inpatient"       value="0">
+    <input name="n_emergency"       value="0">
+    <input name="medical_specialty" value="Family/GeneralPractice">
+    <input name="diag_1"            value="Respiratory">
+    <input name="diag_2"            value="Musculoskeletal">
+    <input name="diag_3"            value="Missing">
+    <input name="glucose_test"      value="normal">
+    <input name="A1Ctest"           value="no">
+    <input name="change"            value="no">
+    <input name="diabetes_med"      value="no">
+  </form>
+
+  <script>
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    const patientForms = {
+      patientA: 'formPatientA',
+      patientB: 'formPatientB',
+      patientC: 'formPatientC',
+    };
+
+    function runDemo(patientId) {
+      const formId = patientForms[patientId];
+      if (formId) document.getElementById(formId).submit();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedPredict — API Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080D1A; --bg2: #0D1426; --bg3: #121A30; --surface: #1A2338;
+      --border: rgba(255,255,255,0.07);
+      --teal: #00D4A8; --teal-dim: rgba(0,212,168,0.10);
+      --white: #F0F4FF; --muted: rgba(240,244,255,0.5); --muted2: rgba(240,244,255,0.3);
+      --danger: #FF6B6B; --warning: #F5C842; --success: #4ADE80; --purple: #A78BFA;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'Courier New', Courier, monospace;
+      --nav-h: 68px; --radius: 12px; --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--white); line-height: 1.6; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 2px; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: rgba(8,13,26,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; }
+    .nav-logo-icon { width: 34px; height: 34px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--bg); font-size: 16px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.875rem; font-weight: 500; padding: 8px 14px; border-radius: 8px; transition: var(--transition); }
+    .nav-links a:hover { color: var(--white); background: var(--border); }
+    .nav-links a.active { color: var(--teal); }
+    .nav-cta { background: var(--teal) !important; color: var(--bg) !important; font-weight: 600 !important; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+    .mobile-menu { display: none; position: fixed; top: var(--nav-h); left: 0; right: 0; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; z-index: 999; flex-direction: column; gap: 4px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { text-decoration: none; color: var(--muted); font-size: 0.95rem; font-weight: 500; padding: 12px 16px; border-radius: 8px; transition: var(--transition); }
+
+    /* LAYOUT */
+    .page-wrap { display: grid; grid-template-columns: 240px 1fr; gap: 0; padding-top: var(--nav-h); min-height: 100vh; }
+    .sidebar { position: sticky; top: var(--nav-h); height: calc(100vh - var(--nav-h)); overflow-y: auto; border-right: 1px solid var(--border); padding: 32px 24px; }
+    .sidebar-title { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted2); margin-bottom: 12px; }
+    .sidebar-link { display: block; text-decoration: none; color: var(--muted); font-size: 0.85rem; padding: 8px 12px; border-radius: 8px; transition: var(--transition); margin-bottom: 2px; }
+    .sidebar-link:hover { color: var(--white); background: var(--border); }
+    .sidebar-link.active { color: var(--teal); background: var(--teal-dim); }
+    .content { padding: 48px 60px 80px; max-width: 860px; }
+
+    /* SECTIONS */
+    .doc-section { margin-bottom: 64px; }
+    .doc-section h2 { font-family: var(--font-serif); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; padding-top: 8px; }
+    .doc-section p { color: var(--muted); font-size: 0.9rem; line-height: 1.8; margin-bottom: 16px; }
+
+    /* ENDPOINT CARD */
+    .endpoint-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+    .endpoint-header { padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+    .method-badge { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+    .method-badge.post { background: rgba(0,212,168,0.15); color: var(--teal); }
+    .method-badge.get  { background: rgba(74,222,128,0.12); color: var(--success); }
+    .endpoint-path { font-family: var(--font-mono); font-size: 0.9rem; color: var(--white); }
+    .endpoint-desc { font-size: 0.82rem; color: var(--muted2); margin-left: auto; }
+    .endpoint-body { padding: 20px; }
+    .endpoint-body h4 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted2); margin-bottom: 12px; }
+
+    /* PARAMS TABLE */
+    .params-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 20px; }
+    .params-table th { text-align: left; padding: 8px 12px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted2); border-bottom: 1px solid var(--border); }
+    .params-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: top; }
+    .params-table tr:last-child td { border-bottom: none; }
+    .param-name { font-family: var(--font-mono); color: var(--teal); font-size: 0.8rem; }
+    .param-type { font-family: var(--font-mono); color: var(--purple); font-size: 0.78rem; }
+    .param-req { font-size: 0.72rem; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+    .param-req.req { background: rgba(255,107,107,0.12); color: var(--danger); }
+    .param-req.opt { background: rgba(240,244,255,0.06); color: var(--muted2); }
+    .param-desc { color: var(--muted); line-height: 1.6; }
+
+    /* CODE BLOCKS */
+    .code-block { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.75; overflow-x: auto; position: relative; margin-bottom: 20px; }
+    .code-block .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--muted2); font-family: var(--font-sans); font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: var(--transition); }
+    .code-block .copy-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.15); }
+    .code-block .copy-btn.copied { color: var(--teal); border-color: rgba(0,212,168,0.3); }
+    .c-key    { color: var(--teal); }
+    .c-str    { color: #f8c555; }
+    .c-num    { color: var(--purple); }
+    .c-bool   { color: var(--danger); }
+    .c-field  { color: var(--success); }
+    .c-comment { color: rgba(240,244,255,0.3); }
+
+    /* RESPONSE BADGE */
+    .resp-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; margin-bottom: 10px; }
+    .resp-badge.ok  { background: rgba(74,222,128,0.12); color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
+    .resp-badge.err { background: rgba(255,107,107,0.12); color: var(--danger);  border: 1px solid rgba(255,107,107,0.2); }
+
+    /* DIVIDER */
+    .doc-divider { height: 1px; background: var(--border); margin: 48px 0; }
+
+    @media (max-width: 900px) {
+      .page-wrap { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 32px 24px 60px; }
+    }
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      MedPredict
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/predictor">Predictor</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/api-docs" class="active">API Docs</a></li>
+      <li><a href="/predictor" class="nav-cta">Run Prediction</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a><a href="/predictor">Predictor</a><a href="/about">About</a>
+    <a href="/dashboard">Dashboard</a><a href="/api-docs">API Docs</a>
+  </div>
+
+  <div class="page-wrap">
+    <aside class="sidebar">
+      <div class="sidebar-title">API Reference</div>
+      <a href="#overview" class="sidebar-link active">Overview</a>
+      <a href="#predict" class="sidebar-link">POST /api/predict</a>
+      <a href="#ai-summary" class="sidebar-link">POST /api/ai-summary</a>
+      <a href="#model-info" class="sidebar-link">GET /api/model-info</a>
+      <a href="#errors" class="sidebar-link">Errors</a>
+      <a href="#example" class="sidebar-link">Full Example</a>
+    </aside>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div class="doc-section" id="overview">
+        <h2>API Overview</h2>
+        <p>MedPredict exposes a lightweight REST API that lets you integrate hospital readmission predictions into any application. The API runs locally on your Flask server — no external authentication is required.</p>
+        <p><strong style="color:var(--white);">Base URL:</strong> <code style="font-family:var(--font-mono);color:var(--teal);background:var(--bg2);padding:2px 8px;border-radius:4px;">http://localhost:5000</code></p>
+        <p>All POST endpoints accept and return <code style="font-family:var(--font-mono);color:var(--teal);background:var(--bg2);padding:2px 8px;border-radius:4px;">application/json</code>. The prediction engine uses a soft-voting ensemble (LR + RF + XGBoost, weights 1:1:2) with threshold 0.42.</p>
+      </div>
+
+      <div class="doc-divider"></div>
+
+      <!-- PREDICT -->
+      <div class="doc-section" id="predict">
+        <h2>POST /api/predict</h2>
+        <p>Runs the full prediction pipeline on a patient's clinical data. Returns readmission prediction, probability score, and risk classification.</p>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge post">POST</span>
+            <span class="endpoint-path">/api/predict</span>
+            <span class="endpoint-desc">Run prediction</span>
+          </div>
+          <div class="endpoint-body">
+            <h4>Request Body Parameters</h4>
+            <table class="params-table">
+              <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">age</td><td class="param-type">string</td><td><span class="param-req req">required</span></td><td class="param-desc">Age bracket: [40-50), [50-60), [60-70), [70-80), [80-90), [90-100)</td></tr>
+                <tr><td class="param-name">time_in_hospital</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Days admitted (1–14)</td></tr>
+                <tr><td class="param-name">n_lab_procedures</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Number of lab tests performed</td></tr>
+                <tr><td class="param-name">n_procedures</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Number of non-lab procedures</td></tr>
+                <tr><td class="param-name">n_medications</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Number of medications prescribed</td></tr>
+                <tr><td class="param-name">n_outpatient</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Prior outpatient visits (past year)</td></tr>
+                <tr><td class="param-name">n_inpatient</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Prior inpatient admissions (past year)</td></tr>
+                <tr><td class="param-name">n_emergency</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Prior emergency visits (past year)</td></tr>
+                <tr><td class="param-name">medical_specialty</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Cardiology, InternalMedicine, Family/GeneralPractice, Surgery, Emergency/Trauma, Other, Missing</td></tr>
+                <tr><td class="param-name">diag_1</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Primary diagnosis: Circulatory, Diabetes, Digestive, Injury, Musculoskeletal, Respiratory, Other, Missing</td></tr>
+                <tr><td class="param-name">diag_2</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Secondary diagnosis (same options as diag_1)</td></tr>
+                <tr><td class="param-name">diag_3</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Additional diagnosis (same options as diag_1)</td></tr>
+                <tr><td class="param-name">glucose_test</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">high, normal, no</td></tr>
+                <tr><td class="param-name">A1Ctest</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">high, normal, no</td></tr>
+                <tr><td class="param-name">change</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">yes, no — medication change during stay</td></tr>
+                <tr><td class="param-name">diabetes_med</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">yes, no — diabetes medication prescribed</td></tr>
+              </tbody>
+            </table>
+
+            <h4>Example Request</h4>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="c-comment">// POST /api/predict</span>
+{
+  <span class="c-key">"age"</span>: <span class="c-str">"[70-80)"</span>,
+  <span class="c-key">"time_in_hospital"</span>: <span class="c-num">9</span>,
+  <span class="c-key">"n_lab_procedures"</span>: <span class="c-num">52</span>,
+  <span class="c-key">"n_procedures"</span>: <span class="c-num">3</span>,
+  <span class="c-key">"n_medications"</span>: <span class="c-num">18</span>,
+  <span class="c-key">"n_outpatient"</span>: <span class="c-num">1</span>,
+  <span class="c-key">"n_inpatient"</span>: <span class="c-num">3</span>,
+  <span class="c-key">"n_emergency"</span>: <span class="c-num">1</span>,
+  <span class="c-key">"medical_specialty"</span>: <span class="c-str">"InternalMedicine"</span>,
+  <span class="c-key">"diag_1"</span>: <span class="c-str">"Circulatory"</span>,
+  <span class="c-key">"diag_2"</span>: <span class="c-str">"Diabetes"</span>,
+  <span class="c-key">"diag_3"</span>: <span class="c-str">"Missing"</span>,
+  <span class="c-key">"glucose_test"</span>: <span class="c-str">"high"</span>,
+  <span class="c-key">"A1Ctest"</span>: <span class="c-str">"high"</span>,
+  <span class="c-key">"change"</span>: <span class="c-str">"yes"</span>,
+  <span class="c-key">"diabetes_med"</span>: <span class="c-str">"yes"</span>
+}
+            </div>
+
+            <h4>Response</h4>
+            <div class="resp-badge ok"><i class="fa-solid fa-circle-check"></i> 200 OK</div>
+            <div class="code-block">
+{
+  <span class="c-key">"success"</span>: <span class="c-bool">true</span>,
+  <span class="c-key">"prediction"</span>: <span class="c-num">1</span>,        <span class="c-comment">// 1 = readmitted, 0 = not readmitted</span>
+  <span class="c-key">"probability"</span>: <span class="c-num">0.6712</span>,    <span class="c-comment">// raw probability 0–1</span>
+  <span class="c-key">"risk_level"</span>: <span class="c-str">"High"</span>,      <span class="c-comment">// "Low" | "Moderate" | "High"</span>
+  <span class="c-key">"threshold"</span>: <span class="c-num">0.42</span>,
+  <span class="c-key">"model_info"</span>: {
+    <span class="c-key">"type"</span>: <span class="c-str">"SoftVotingClassifier"</span>,
+    <span class="c-key">"weights"</span>: [<span class="c-num">1</span>, <span class="c-num">1</span>, <span class="c-num">2</span>],
+    <span class="c-key">"models"</span>: [<span class="c-str">"LogisticRegression"</span>, <span class="c-str">"RandomForestClassifier"</span>, <span class="c-str">"XGBClassifier"</span>]
+  }
+}
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="doc-divider"></div>
+
+      <!-- AI SUMMARY -->
+      <div class="doc-section" id="ai-summary">
+        <h2>POST /api/ai-summary</h2>
+        <p>Generates a patient-specific clinical summary using the Anthropic Claude API. If no API key is set, returns a rule-based summary automatically — the endpoint never fails silently.</p>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge post">POST</span>
+            <span class="endpoint-path">/api/ai-summary</span>
+            <span class="endpoint-desc">Generate clinical summary</span>
+          </div>
+          <div class="endpoint-body">
+            <h4>Request Body Parameters</h4>
+            <table class="params-table">
+              <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">prediction</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">0 or 1 — result from /api/predict</td></tr>
+                <tr><td class="param-name">probability</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">Raw probability score 0–1</td></tr>
+                <tr><td class="param-name">risk_level</td><td class="param-type">string</td><td><span class="param-req req">required</span></td><td class="param-desc">"Low", "Moderate", or "High"</td></tr>
+                <tr><td class="param-name">key_factors</td><td class="param-type">object</td><td><span class="param-req req">required</span></td><td class="param-desc">Patient clinical factors (age, n_medications, n_inpatient, diag_1, etc.)</td></tr>
+              </tbody>
+            </table>
+
+            <h4>Example Request</h4>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="c-comment">// POST /api/ai-summary</span>
+{
+  <span class="c-key">"prediction"</span>: <span class="c-num">1</span>,
+  <span class="c-key">"probability"</span>: <span class="c-num">0.6712</span>,
+  <span class="c-key">"risk_level"</span>: <span class="c-str">"High"</span>,
+  <span class="c-key">"key_factors"</span>: {
+    <span class="c-key">"age"</span>: <span class="c-str">"[70-80)"</span>,
+    <span class="c-key">"time_in_hospital"</span>: <span class="c-num">9</span>,
+    <span class="c-key">"n_medications"</span>: <span class="c-num">18</span>,
+    <span class="c-key">"n_inpatient"</span>: <span class="c-num">3</span>,
+    <span class="c-key">"diag_1"</span>: <span class="c-str">"Circulatory"</span>,
+    <span class="c-key">"glucose_test"</span>: <span class="c-str">"high"</span>,
+    <span class="c-key">"A1Ctest"</span>: <span class="c-str">"high"</span>,
+    <span class="c-key">"polypharmacy"</span>: <span class="c-bool">true</span>
+  }
+}
+            </div>
+
+            <h4>Response</h4>
+            <div class="resp-badge ok"><i class="fa-solid fa-circle-check"></i> 200 OK</div>
+            <div class="code-block">
+{
+  <span class="c-key">"success"</span>: <span class="c-bool">true</span>,
+  <span class="c-key">"summary"</span>: <span class="c-str">"This patient presents with a 67.1% readmission probability,
+  placing them firmly in the high-risk category...\n\nThe primary
+  contributors include 3 prior inpatient admissions, polypharmacy
+  (18 medications), and elevated glycaemic markers...\n\nThe care
+  team should arrange a discharge planning conference and schedule
+  follow-up within 48 hours."</span>
+}
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);margin-top:8px;">
+              <i class="fa-solid fa-circle-info" style="color:var(--teal);margin-right:6px;"></i>
+              Requires <code style="font-family:var(--font-mono);color:var(--teal);">ANTHROPIC_API_KEY</code> environment variable for AI-generated summaries. Falls back to a rule-based summary automatically if the key is not set — the endpoint never returns an error due to a missing key.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODEL INFO -->
+      <div class="doc-section" id="model-info">
+        <h2>GET /api/model-info</h2>
+        <p>Returns model metadata, performance metrics, and per-model comparison data. Used by the Dashboard page.</p>
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge get">GET</span>
+            <span class="endpoint-path">/api/model-info</span>
+            <span class="endpoint-desc">Model metadata</span>
+          </div>
+          <div class="endpoint-body">
+            <h4>Response</h4>
+            <div class="resp-badge ok"><i class="fa-solid fa-circle-check"></i> 200 OK</div>
+            <div class="code-block">
+{
+  <span class="c-key">"model_type"</span>: <span class="c-str">"Soft Voting Ensemble"</span>,
+  <span class="c-key">"threshold"</span>: <span class="c-num">0.42</span>,
+  <span class="c-key">"dataset_size"</span>: <span class="c-num">25000</span>,
+  <span class="c-key">"features"</span>: <span class="c-num">54</span>,
+  <span class="c-key">"metrics"</span>: {
+    <span class="c-key">"accuracy"</span>: <span class="c-num">0.60</span>,
+    <span class="c-key">"recall_class_1"</span>: <span class="c-num">0.75</span>,
+    <span class="c-key">"recall_class_0"</span>: <span class="c-num">0.47</span>,
+    <span class="c-key">"roc_auc"</span>: <span class="c-num">0.67</span>
+  },
+  <span class="c-key">"model_comparison"</span>: [...]
+}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-divider"></div>
+
+      <!-- ERRORS -->
+      <div class="doc-section" id="errors">
+        <h2>Error Responses</h2>
+        <p>All error responses follow a consistent JSON format with a <code style="font-family:var(--font-mono);color:var(--teal);">success: false</code> flag and an error message.</p>
+        <div class="resp-badge err"><i class="fa-solid fa-circle-xmark"></i> 4xx / 5xx Error</div>
+        <div class="code-block">
+{
+  <span class="c-key">"success"</span>: <span class="c-bool">false</span>,
+  <span class="c-key">"error"</span>: <span class="c-str">"Description of what went wrong"</span>
+}
+        </div>
+      </div>
+
+
+      <div class="doc-divider"></div>
+
+      <!-- FULL EXAMPLE -->
+      <div class="doc-section" id="example">
+        <h2>Full Python Example</h2>
+        <p>A complete example showing how to call the prediction API and then generate a clinical summary — two sequential requests.</p>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="c-comment">import requests
+
+BASE_URL = "http://localhost:5000"
+
+# Step 1 — Run prediction
+patient = {
+    "age": "[70-80)",
+    "time_in_hospital": 9,
+    "n_lab_procedures": 52,
+    "n_procedures": 3,
+    "n_medications": 18,
+    "n_outpatient": 1,
+    "n_inpatient": 3,
+    "n_emergency": 1,
+    "medical_specialty": "InternalMedicine",
+    "diag_1": "Circulatory",
+    "diag_2": "Diabetes",
+    "diag_3": "Missing",
+    "glucose_test": "high",
+    "A1Ctest": "high",
+    "change": "yes",
+    "diabetes_med": "yes"
+}
+
+pred_response = requests.post(f"{BASE_URL}/api/predict", json=patient)
+pred = pred_response.json()
+
+print(f"Prediction : {pred['prediction']}")   # 1
+print(f"Probability: {pred['probability']}")  # e.g. 0.6712
+print(f"Risk Level : {pred['risk_level']}")   # High
+
+# Step 2 — Get AI clinical summary
+summary_response = requests.post(f"{BASE_URL}/api/ai-summary", json={
+    "prediction":  pred["prediction"],
+    "probability": pred["probability"],
+    "risk_level":  pred["risk_level"],
+    "key_factors": {
+        "age": patient["age"],
+        "time_in_hospital": patient["time_in_hospital"],
+        "n_medications": patient["n_medications"],
+        "n_inpatient": patient["n_inpatient"],
+        "n_lab_procedures": patient["n_lab_procedures"],
+        "diag_1": patient["diag_1"],
+        "glucose_test": patient["glucose_test"],
+        "A1Ctest": patient["A1Ctest"],
+        "polypharmacy": patient["n_medications"] >= 5
+    }
+})
+
+summary = summary_response.json()
+print("\nClinical Summary:")
+print(summary["summary"])</span>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /page-wrap -->
+
+  <script>
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    function copyCode(btn) {
+      const block = btn.closest('.code-block');
+      const text  = block.innerText.replace('Copy', '').replace('Copied!', '').trim();
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    // Sidebar active link on scroll
+    const sections = document.querySelectorAll('.doc-section');
+    const links    = document.querySelectorAll('.sidebar-link');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+      links.forEach(l => {
+        l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+      });
+    });
+  </script>
+</body>
+</html>

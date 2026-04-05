@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedPredict — Hospital Readmission Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    /* ─── RESET & BASE ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080D1A;
+      --bg2:       #0D1426;
+      --bg3:       #121A30;
+      --surface:   #1A2338;
+      --border:    rgba(255,255,255,0.07);
+      --teal:      #00D4A8;
+      --teal-dim:  rgba(0,212,168,0.12);
+      --teal-glow: rgba(0,212,168,0.25);
+      --white:     #F0F4FF;
+      --muted:     rgba(240,244,255,0.5);
+      --danger:    #FF6B6B;
+      --gold:      #F5C842;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+      --nav-h:     68px;
+      --radius:    12px;
+      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--white);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── SCROLLBAR ────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 2px; }
+
+    /* ─── NAV ──────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(8,13,26,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    nav.scrolled {
+      background: rgba(8,13,26,0.97);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--white);
+      font-family: var(--font-serif);
+      font-size: 1.3rem; font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-logo-icon {
+      width: 34px; height: 34px;
+      background: var(--teal);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--bg);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 4px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: var(--transition);
+      letter-spacing: 0.01em;
+    }
+
+    .nav-links a:hover { color: var(--white); background: var(--border); }
+    .nav-links a.active { color: var(--teal); }
+
+    .nav-cta {
+      background: var(--teal) !important;
+      color: var(--bg) !important;
+      font-weight: 600 !important;
+      padding: 8px 20px !important;
+    }
+
+    .nav-cta:hover { background: #00f0c0 !important; transform: translateY(-1px); }
+
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      cursor: pointer; padding: 4px; background: none; border: none;
+    }
+    .hamburger span {
+      display: block; width: 22px; height: 2px;
+      background: var(--white); border-radius: 2px;
+      transition: var(--transition);
+    }
+
+    .mobile-menu {
+      display: none; position: fixed; top: var(--nav-h); left: 0; right: 0;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 16px 24px; z-index: 999;
+      flex-direction: column; gap: 4px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      text-decoration: none; color: var(--muted);
+      font-size: 0.95rem; font-weight: 500;
+      padding: 12px 16px; border-radius: 8px;
+      transition: var(--transition);
+    }
+    .mobile-menu a:hover { color: var(--white); background: var(--border); }
+
+    /* ─── HERO ─────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding: calc(var(--nav-h) + 60px) 80px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Dot grid background */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(0,212,168,0.15) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Glow orb */
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      top: -100px; right: -100px;
+      background: radial-gradient(circle, rgba(0,212,168,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--teal-dim);
+      border: 1px solid rgba(0,212,168,0.3);
+      color: var(--teal);
+      font-size: 0.8rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 100px;
+      margin-bottom: 28px;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-badge i { font-size: 10px; }
+
+    .hero h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 6vw, 5.2rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+      max-width: 700px;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--teal);
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.75;
+      margin-bottom: 40px;
+      font-weight: 300;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex; align-items: center; gap: 16px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--teal);
+      color: var(--bg);
+      text-decoration: none;
+      font-weight: 600; font-size: 0.95rem;
+      padding: 14px 28px; border-radius: var(--radius);
+      transition: var(--transition);
+      letter-spacing: 0.01em;
+    }
+    .btn-primary:hover {
+      background: #00f0c0;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,212,168,0.35);
+    }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent;
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 500; font-size: 0.95rem;
+      padding: 14px 28px; border-radius: var(--radius);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+
+    /* EKG canvas */
+    .ekg-wrap {
+      position: absolute; bottom: 60px; left: 0; right: 0;
+      height: 80px; opacity: 0.35;
+      animation: fadeUp 1s ease 0.5s both;
+      pointer-events: none;
+    }
+
+    #ekgCanvas { width: 100%; height: 100%; }
+
+    /* ─── STATS BAR ─────────────────────────────────── */
+    .stats-bar {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 40px 80px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: var(--radius);
+      transition: var(--transition);
+    }
+
+    .stat-item:hover { background: var(--surface); }
+
+    .stat-num {
+      font-family: var(--font-serif);
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: var(--teal);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-sublabel {
+      font-size: 0.75rem;
+      color: rgba(240,244,255,0.3);
+      margin-top: 2px;
+    }
+
+    /* ─── SECTION BASE ──────────────────────────────── */
+    section { padding: 100px 80px; }
+
+    .section-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--teal);
+      font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-eyebrow::before {
+      content: '';
+      display: block; width: 24px; height: 2px;
+      background: var(--teal); border-radius: 2px;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.75;
+      margin-bottom: 60px;
+    }
+
+    /* ─── FEATURES ──────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .feature-card:hover {
+      background: var(--surface);
+      border-color: rgba(0,212,168,0.2);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: var(--teal-dim);
+      border: 1px solid rgba(0,212,168,0.2);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 24px;
+      font-size: 20px; color: var(--teal);
+      transition: var(--transition);
+    }
+
+    .feature-card:hover .feature-icon {
+      background: rgba(0,212,168,0.2);
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-serif);
+      font-size: 1.3rem; font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    /* ─── HOW IT WORKS ──────────────────────────────── */
+    #how { background: var(--bg2); }
+
+    .steps-wrap {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      position: relative;
+    }
+
+    /* Connecting line between steps */
+    .steps-wrap::after {
+      content: '';
+      position: absolute;
+      top: 38px; left: calc(33.3% - 20px); right: calc(33.3% - 20px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--teal), rgba(0,212,168,0.2), var(--teal));
+      pointer-events: none;
+    }
+
+    .step {
+      padding: 0 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-num {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 2px solid var(--teal);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 28px;
+      font-family: var(--font-serif);
+      font-size: 1.6rem; font-weight: 700;
+      color: var(--teal);
+      position: relative; z-index: 1;
+      transition: var(--transition);
+      box-shadow: 0 0 0 8px var(--bg2);
+    }
+
+    .step:hover .step-num {
+      background: var(--teal);
+      color: var(--bg);
+      box-shadow: 0 0 0 8px var(--bg2), 0 0 30px rgba(0,212,168,0.35);
+    }
+
+    .step h3 {
+      font-family: var(--font-serif);
+      font-size: 1.2rem; font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .step p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    /* ─── DISCLAIMER BANNER ─────────────────────────── */
+    .disclaimer {
+      background: rgba(245,200,66,0.06);
+      border: 1px solid rgba(245,200,66,0.2);
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      display: flex; align-items: flex-start; gap: 16px;
+      margin: 0 80px 60px;
+    }
+
+    .disclaimer i {
+      color: var(--gold);
+      font-size: 18px;
+      margin-top: 2px; flex-shrink: 0;
+    }
+
+    .disclaimer-text {
+      font-size: 0.85rem;
+      color: rgba(240,244,255,0.65);
+      line-height: 1.65;
+    }
+
+    .disclaimer-text strong {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* ─── MODEL HIGHLIGHT ───────────────────────────── */
+    .model-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .model-diagram {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    .model-diagram-title {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+    }
+
+    .model-bar-wrap {
+      display: flex; flex-direction: column; gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .model-bar-row {
+      display: flex; align-items: center; gap: 14px;
+    }
+
+    .model-bar-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      width: 140px; flex-shrink: 0;
+      text-align: right;
+    }
+
+    .model-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--surface);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .model-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--teal);
+      width: 0;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .model-bar-fill.danger { background: var(--danger); }
+
+    .model-bar-val {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--white);
+      width: 36px; flex-shrink: 0;
+    }
+
+    .model-note {
+      font-size: 0.75rem;
+      color: rgba(240,244,255,0.3);
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      line-height: 1.6;
+    }
+
+    /* ─── CTA SECTION ───────────────────────────────── */
+    .cta-section {
+      margin: 0 80px 100px;
+      background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+      border: 1px solid rgba(0,212,168,0.2);
+      border-radius: 24px;
+      padding: 80px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      top: -200px; right: -100px;
+      background: radial-gradient(circle, rgba(0,212,168,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-section h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .cta-section p {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 36px;
+      max-width: 480px;
+      margin-left: auto; margin-right: auto;
+      line-height: 1.75;
+    }
+
+    /* ─── FOOTER ────────────────────────────────────── */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 60px 80px 40px;
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 60px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .footer-brand p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-top: 16px;
+      max-width: 280px;
+    }
+
+    .footer-col h4 {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 10px; }
+    .footer-col ul a {
+      text-decoration: none;
+      color: rgba(240,244,255,0.5);
+      font-size: 0.875rem;
+      transition: var(--transition);
+    }
+    .footer-col ul a:hover { color: var(--teal); }
+
+    .footer-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+
+    .footer-bottom p {
+      font-size: 0.8rem;
+      color: rgba(240,244,255,0.3);
+    }
+
+    .footer-bottom span {
+      color: var(--teal);
+    }
+
+    /* ─── SCROLL REVEAL ─────────────────────────────── */
+    /* Elements are VISIBLE by default — JS adds animation when scrolled to */
+    .reveal {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    /* JS adds .anim-ready first, THEN .visible — so only JS-enabled browsers animate */
+    .reveal.anim-ready {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+    .reveal.anim-ready.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ─── ANIMATIONS ────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(0,212,168,0.4); }
+      70%  { box-shadow: 0 0 0 12px rgba(0,212,168,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,212,168,0); }
+    }
+
+    .pulse { animation: pulse-ring 2s ease infinite; }
+
+    /* ─── RESPONSIVE ────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .hero { padding: calc(var(--nav-h) + 40px) 40px 60px; }
+      section { padding: 80px 40px; }
+      .stats-bar { padding: 32px 40px; grid-template-columns: repeat(2,1fr); }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .model-section { grid-template-columns: 1fr; gap: 40px; }
+      .footer-top { grid-template-columns: 1fr 1fr; gap: 40px; }
+      .cta-section { margin: 0 40px 80px; padding: 60px 40px; }
+      .disclaimer { margin: 0 40px 40px; }
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .hero { padding: calc(var(--nav-h) + 30px) 24px 40px; }
+      .hero h1 { font-size: 2.4rem; }
+      section { padding: 60px 24px; }
+      .stats-bar { padding: 24px; grid-template-columns: repeat(2,1fr); gap: 8px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .steps-wrap { grid-template-columns: 1fr; gap: 40px; }
+      .steps-wrap::after { display: none; }
+      .footer-top { grid-template-columns: 1fr; gap: 32px; }
+      .cta-section { margin: 0 20px 60px; padding: 48px 28px; }
+      .disclaimer { margin: 0 20px 32px; }
+      footer { padding: 40px 24px 28px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── NAV ──────────────────────────────────── -->
+  <nav id="navbar">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon pulse">
+        <i class="fa-solid fa-heart-pulse"></i>
+      </div>
+      MedPredict
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="/" class="active">Home</a></li>
+      <li><a href="/predictor">Predictor</a></li>
+      <li><a href="/compare">Compare</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/how-it-works">How It Works</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/demo">Demo</a></li>
+      <li><a href="/team">Team</a></li>
+      <li><a href="/health-check">Health Check</a></li>
+      <li><a href="/predictor" class="nav-cta">Run Prediction</a></li>
+    </ul>
+
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a>
+    <a href="/predictor">Predictor</a>
+    <a href="/compare">Compare</a>
+    <a href="/about">About</a>
+    <a href="/how-it-works">How It Works</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/history">History</a>
+    <a href="/demo">Demo</a>
+    <a href="/team">Team</a>
+  </div>
+
+  <!-- ─── HERO ───────────────────────────────────── -->
+  <section class="hero" id="hero">
+    <div class="hero-badge">
+      <i class="fa-solid fa-circle" style="color:var(--teal);font-size:7px;"></i>
+      AI-Powered Clinical Decision Support
+    </div>
+
+    <h1>
+      Predict <em> hospital readmission</em><br>
+      before it happens.
+    </h1>
+
+    <p class="hero-sub">
+      MedPredict uses an ensemble of machine learning models trained on 25,000
+      clinical records to flag high-risk patients before discharge — giving
+      healthcare teams time to intervene.
+    </p>
+
+    <div class="hero-actions">
+      <a href="/predictor" class="btn-primary">
+        <i class="fa-solid fa-stethoscope"></i>
+        Run a Prediction
+      </a>
+      <a href="/how-it-works" class="btn-secondary">
+        <i class="fa-solid fa-play" style="font-size:11px;"></i>
+        See How It Works
+      </a>
+    </div>
+
+    <!-- Animated EKG -->
+    <div class="ekg-wrap">
+      <canvas id="ekgCanvas"></canvas>
+    </div>
+  </section>
+
+  <!-- ─── STATS BAR ──────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stat-item reveal">
+      <div class="stat-num" data-target="25000" data-suffix="+" data-comma="true">0</div>
+      <div class="stat-label">Clinical Records</div>
+      <div class="stat-sublabel">Training dataset size</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-1">
+      <div class="stat-num" data-target="75" data-suffix="%" data-comma="false">0</div>
+      <div class="stat-label">Recall Rate</div>
+      <div class="stat-sublabel">High-risk patients caught</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-2">
+      <div class="stat-num" data-target="54" data-suffix="" data-comma="false">0</div>
+      <div class="stat-label">Input Features</div>
+      <div class="stat-sublabel">After feature engineering</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-3">
+      <div class="stat-num" data-target="3" data-suffix="" data-comma="false">0</div>
+      <div class="stat-label">Model Ensemble</div>
+      <div class="stat-sublabel">LR + RF + XGBoost</div>
+    </div>
+  </div>
+
+  <!-- ─── FEATURES ───────────────────────────────── -->
+  <section id="features">
+    <div class="section-eyebrow">Capabilities</div>
+    <h2 class="section-title">Everything a clinical team needs.</h2>
+    <p class="section-sub">
+      From raw patient data to actionable risk insight — in seconds.
+    </p>
+
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="fa-solid fa-brain"></i></div>
+        <h3>Ensemble Intelligence</h3>
+        <p>Three models — Logistic Regression, Random Forest, and XGBoost — vote together with calibrated weights. No single model's blind spots dominate the decision.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+        <h3>Explainable Predictions</h3>
+        <p>Every prediction comes with an AI-generated clinical summary explaining which patient factors drove the result, in plain language a doctor can act on.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3>Recall-Optimized</h3>
+        <p>In healthcare, missing a high-risk patient is worse than a false alarm. Our threshold is tuned to catch 75% of patients who will be readmitted — not just maximize accuracy.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="fa-solid fa-circle-nodes"></i></div>
+        <h3>Visual Risk Profiling</h3>
+        <p>Radar charts and risk gauges show where a patient sits relative to the population across all clinical dimensions at a single glance.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <h3>Patient History</h3>
+        <p>All past predictions are stored locally so you can track risk trends across multiple patients and sessions without any server-side storage.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon"><i class="fa-solid fa-file-medical"></i></div>
+        <h3>Printable Reports</h3>
+        <p>Generate a clean, print-ready PDF summary of any prediction for inclusion in patient notes or handover documentation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── HOW IT WORKS ───────────────────────────── -->
+  <section id="how">
+    <div class="section-eyebrow">Process</div>
+    <h2 class="section-title">Three steps to a risk assessment.</h2>
+    <p class="section-sub">
+      No training required. Enter the patient's data and get a result in under 10 seconds.
+    </p>
+
+    <div class="steps-wrap">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <h3>Enter Patient Data</h3>
+        <p>Fill in the guided 3-step form with demographics, hospital visit metrics, and clinical test results. Every field includes a plain-language tooltip.</p>
+      </div>
+      <div class="step reveal reveal-delay-1">
+        <div class="step-num">2</div>
+        <h3>AI Analysis</h3>
+        <p>Your data passes through feature engineering, IQR normalization, and a soft-voting ensemble of three calibrated models trained on 25,000 real records.</p>
+      </div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-num">3</div>
+        <h3>Review & Act</h3>
+        <p>Get an immediate risk classification, probability score, radar chart, and an AI-written clinical summary with recommended follow-up actions.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── MODEL HIGHLIGHT ─────────────────────────── -->
+  <section id="model">
+    <div class="model-section">
+      <div>
+        <div class="section-eyebrow">Model Performance</div>
+        <h2 class="section-title">Optimized for what matters.</h2>
+        <p class="section-sub" style="margin-bottom:32px;">
+          We chose to maximize recall over raw accuracy. In a clinical context,
+          a false negative — missing a high-risk patient — carries far greater
+          cost than a false alarm.
+        </p>
+        <a href="/dashboard" class="btn-secondary">
+          <i class="fa-solid fa-chart-simple"></i>
+          View Full Dashboard
+        </a>
+      </div>
+
+      <div class="model-diagram reveal">
+        <div class="model-diagram-title">Soft Voting Ensemble — Key Metrics</div>
+        <div class="model-bar-wrap">
+          <div class="model-bar-row">
+            <div class="model-bar-label">Overall Accuracy</div>
+            <div class="model-bar-track">
+              <div class="model-bar-fill" data-width="60"></div>
+            </div>
+            <div class="model-bar-val">60%</div>
+          </div>
+          <div class="model-bar-row">
+            <div class="model-bar-label">Recall (Readmitted)</div>
+            <div class="model-bar-track">
+              <div class="model-bar-fill" data-width="75"></div>
+            </div>
+            <div class="model-bar-val">75%</div>
+          </div>
+          <div class="model-bar-row">
+            <div class="model-bar-label">Recall (Not Readmitted)</div>
+            <div class="model-bar-track">
+              <div class="model-bar-fill danger" data-width="47"></div>
+            </div>
+            <div class="model-bar-val">47%</div>
+          </div>
+          <div class="model-bar-row">
+            <div class="model-bar-label">ROC-AUC</div>
+            <div class="model-bar-track">
+              <div class="model-bar-fill" data-width="67"></div>
+            </div>
+            <div class="model-bar-val">0.67</div>
+          </div>
+        </div>
+        <p class="model-note">
+          Threshold tuned to 0.42 (vs default 0.5) via grid search on validation set.
+          Baseline accuracy of majority-class classifier: 53%.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DISCLAIMER ─────────────────────────────── -->
+  <div class="disclaimer">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <p class="disclaimer-text">
+      <strong>For educational and research purposes only.</strong>
+      MedPredict is a student project built on a publicly available dataset.
+      It is not a certified medical device and must not be used as a substitute
+      for professional clinical judgment. Always consult a qualified healthcare
+      provider.
+    </p>
+  </div>
+
+  <!-- ─── CTA ────────────────────────────────────── -->
+  <div class="cta-section">
+    <div class="section-eyebrow" style="justify-content:center;">Get Started</div>
+    <h2>Ready to assess readmission risk?</h2>
+    <p>Enter a patient's clinical data and get a full AI-powered risk report in under 10 seconds.</p>
+    <a href="/predictor" class="btn-primary" style="font-size:1rem;padding:16px 36px;">
+      <i class="fa-solid fa-stethoscope"></i>
+      Open the Predictor
+    </a>
+  </div>
+
+  <!-- ─── FOOTER ─────────────────────────────────── -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="/" class="nav-logo" style="text-decoration:none;">
+          <div class="nav-logo-icon">
+            <i class="fa-solid fa-heart-pulse"></i>
+          </div>
+          MedPredict
+        </a>
+        <p>An AI-powered hospital readmission prediction tool built as part of the PBL-1 project at Symbiosis Institute of Technology, Pune. Batch 2024–28.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/predictor">Predictor</a></li>
+          <li><a href="/compare">Model Comparison</a></li>
+          <li><a href="/history">Patient History</a></li>
+          <li><a href="/dashboard">Model Dashboard</a></li>
+          <li><a href="/demo">Live Demo</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Learn</h4>
+        <ul>
+          <li><a href="/about">About the Project</a></li>
+          <li><a href="/how-it-works">How It Works</a></li>
+          <li><a href="/ethics">Ethics & Disclaimer</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Team</h4>
+        <ul>
+          <li><a href="/team">Meet the Team</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 MedPredict — Symbiosis Institute of Technology, Pune. Built with <span>&#9829;</span> by AIML A Division.</p>
+      <p style="font-size:0.75rem;">Not for clinical use &nbsp;·&nbsp; Educational project only</p>
+    </div>
+  </footer>
+
+
+  <!-- ─── SCRIPTS ─────────────────────────────────── -->
+  <script>
+    // ── Navbar scroll effect ──────────────────────
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 20);
+    });
+
+    // ── Hamburger menu ────────────────────────────
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    hamburger.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!navbar.contains(e.target)) mobileMenu.classList.remove('open');
+    });
+
+    // ── Scroll reveal ─────────────────────────────
+    // First mark all elements as animation-ready (hides them),
+    // then immediately observe — so visible ones fire right away
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0, rootMargin: '0px 0px -10px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => {
+      el.classList.add('anim-ready');
+      revealObserver.observe(el);
+    });
+
+    // Ultimate safety net: reveal everything after 600ms no matter what
+    setTimeout(() => {
+      document.querySelectorAll('.reveal').forEach(el => {
+        el.classList.add('visible');
+      });
+    }, 600);
+
+    // ── Stat counter animation ────────────────────
+    function animateCounter(el) {
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      const comma  = el.dataset.comma === 'true';
+      const dur    = 1800;
+      const start  = performance.now();
+
+      function step(now) {
+        const p   = Math.min((now - start) / dur, 1);
+        const val = Math.floor(easeOut(p) * target);
+        el.textContent = (comma ? val.toLocaleString() : val) + suffix;
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+    }, 500);
+
+    // ── Model bar animation ───────────────────────
+    const barObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.model-bar-fill').forEach(bar => {
+            const w = bar.dataset.width;
+            setTimeout(() => { bar.style.width = w + '%'; }, 200);
+          });
+          barObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
+
+    document.querySelectorAll('.model-diagram').forEach(el => barObserver.observe(el));
+
+    // ── EKG canvas animation ──────────────────────
+    const canvas = document.getElementById('ekgCanvas');
+    const ctx    = canvas.getContext('2d');
+    let offset   = 0;
+
+    function resizeCanvas() {
+      canvas.width  = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // One EKG complex: flat → small bump → spike → dip → bump → flat
+    function ekgY(x, w) {
+      const t = ((x % w) / w);
+      if (t < 0.10) return 0;
+      if (t < 0.15) return -0.15 * Math.sin((t - 0.10) / 0.05 * Math.PI);
+      if (t < 0.20) return 0;
+      if (t < 0.23) return -(t - 0.20) / 0.03 * 0.8;
+      if (t < 0.26) return -0.8 + (t - 0.23) / 0.03 * 1.8;
+      if (t < 0.29) return 1.0 - (t - 0.26) / 0.03 * 1.0;
+      if (t < 0.34) return -(t - 0.29) / 0.05 * 0.3;
+      if (t < 0.40) return -0.3 + (t - 0.34) / 0.06 * 0.3;
+      return 0;
+    }
+
+    function drawEKG() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const h    = canvas.height;
+      const w    = canvas.width;
+      const amp  = h * 0.38;
+      const mid  = h * 0.5;
+      const segW = 280; // one heartbeat cycle width
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#00D4A8';
+      ctx.lineWidth   = 1.8;
+      ctx.shadowColor = '#00D4A8';
+      ctx.shadowBlur  = 6;
+
+      for (let x = 0; x <= w; x++) {
+        const xShifted = (x - offset % segW + segW * 10) % (segW * 2);
+        const y = mid + ekgY(xShifted, segW) * amp;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+   
+    // ── Fallback reveal (safety net for all browsers) ──
+    setTimeout(() => {
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+      document.querySelectorAll('.stat-num[data-target]').forEach(el => {
+        if (el.textContent === '0') animateCounter(el);
+      });
+      document.querySelectorAll('.model-bar-fill').forEach(bar => {
+        if (!bar.style.width || bar.style.width === '0%') {
+          bar.style.width = (bar.dataset.width || 0) + '%';
+        }
+      });
+    }, 900);
+ 
+  </script>
+
+  <!-- Bulletproof stat counter -->
+  <script>
+    (function startCounters() {
+      function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+      function runCounter(el) {
+        var target = parseInt(el.getAttribute('data-target'));
+        var suffix = el.getAttribute('data-suffix') || '';
+        var comma  = el.getAttribute('data-comma') === 'true';
+        var dur = 1800, start = null;
+        function step(ts) {
+          if (!start) start = ts;
+          var p = Math.min((ts - start) / dur, 1);
+          var val = Math.floor(easeOut(p) * target);
+          el.textContent = (comma ? val.toLocaleString() : val) + suffix;
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+      function runAll() {
+        document.querySelectorAll('.stat-num[data-target]').forEach(runCounter);
+      }
+      setTimeout(runAll, 400);
+      window.addEventListener('load', function() { setTimeout(runAll, 300); });
+    })();
+  </script>
+
+</body>
+</html>

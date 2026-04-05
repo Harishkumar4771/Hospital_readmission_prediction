@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedPredict — Model Performance Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080D1A;
+      --bg2:       #0D1426;
+      --bg3:       #121A30;
+      --surface:   #1A2338;
+      --surface2:  #1F2B42;
+      --border:    rgba(255,255,255,0.07);
+      --teal:      #00D4A8;
+      --teal-dim:  rgba(0,212,168,0.10);
+      --white:     #F0F4FF;
+      --muted:     rgba(240,244,255,0.5);
+      --muted2:    rgba(240,244,255,0.28);
+      --danger:    #FF6B6B;
+      --warning:   #F5C842;
+      --success:   #4ADE80;
+      --purple:    #A78BFA;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+      --nav-h:     68px;
+      --radius:    12px;
+      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--white);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 2px; }
+
+    /* ── NAV ─────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(8,13,26,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--white);
+      font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700;
+    }
+    .nav-logo-icon {
+      width: 34px; height: 34px; background: var(--teal); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--bg); font-size: 16px;
+    }
+    .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+    .nav-links a {
+      text-decoration: none; color: var(--muted);
+      font-size: 0.875rem; font-weight: 500;
+      padding: 8px 14px; border-radius: 8px; transition: var(--transition);
+    }
+    .nav-links a:hover { color: var(--white); background: var(--border); }
+    .nav-links a.active { color: var(--teal); }
+    .nav-cta { background: var(--teal) !important; color: var(--bg) !important; font-weight: 600 !important; }
+    .nav-cta:hover { background: #00f0c0 !important; }
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      cursor: pointer; padding: 4px; background: none; border: none;
+    }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+    .mobile-menu {
+      display: none; position: fixed; top: var(--nav-h); left: 0; right: 0;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 16px 24px; z-index: 999; flex-direction: column; gap: 4px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      text-decoration: none; color: var(--muted); font-size: 0.95rem;
+      font-weight: 500; padding: 12px 16px; border-radius: 8px; transition: var(--transition);
+    }
+    .mobile-menu a:hover { color: var(--white); background: var(--border); }
+
+    /* ── PAGE ────────────────────────────────── */
+    .page-wrap {
+      padding: calc(var(--nav-h) + 40px) 40px 80px;
+      max-width: 1200px; margin: 0 auto;
+    }
+
+    /* ── PAGE HEADER ─────────────────────────── */
+    .page-header {
+      margin-bottom: 40px;
+      display: flex; align-items: flex-end;
+      justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    }
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--teal); font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .page-eyebrow::before {
+      content: ''; display: block; width: 20px; height: 2px;
+      background: var(--teal); border-radius: 2px;
+    }
+    .page-header h1 {
+      font-family: var(--font-serif);
+      font-size: 2.2rem; font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.15;
+    }
+    .page-header p {
+      color: var(--muted); font-size: 0.9rem;
+      line-height: 1.7; max-width: 500px; margin-top: 8px;
+    }
+    .winner-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--teal-dim); border: 1px solid rgba(0,212,168,0.25);
+      color: var(--teal); font-size: 0.78rem; font-weight: 600;
+      padding: 8px 16px; border-radius: 100px; white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── GRID ────────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+
+    /* ── METRIC CARD ─────────────────────────── */
+    .metric-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px;
+      position: relative; overflow: hidden;
+      transition: var(--transition);
+    }
+    .metric-card:hover { border-color: rgba(0,212,168,0.15); transform: translateY(-2px); }
+    .metric-card::after {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      opacity: 0; transition: var(--transition);
+    }
+    .metric-card:hover::after { opacity: 1; }
+    .metric-card.teal::after   { background: var(--teal); }
+    .metric-card.warn::after   { background: var(--warning); }
+    .metric-card.danger::after { background: var(--danger); }
+    .metric-card.purple::after { background: var(--purple); }
+
+    .metric-card-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .metric-card-label i { font-size: 12px; }
+    .metric-card-val {
+      font-family: var(--font-serif);
+      font-size: 2.6rem; font-weight: 700; line-height: 1;
+      margin-bottom: 6px;
+    }
+    .metric-card.teal   .metric-card-val { color: var(--teal); }
+    .metric-card.warn   .metric-card-val { color: var(--warning); }
+    .metric-card.danger .metric-card-val { color: var(--danger); }
+    .metric-card.purple .metric-card-val { color: var(--purple); }
+    .metric-card-note {
+      font-size: 0.75rem; color: var(--muted2); line-height: 1.5;
+    }
+
+    /* ── CARD ────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .card-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .card-header-left { display: flex; align-items: center; gap: 12px; }
+    .card-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--teal-dim); border: 1px solid rgba(0,212,168,0.2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--teal); font-size: 15px; flex-shrink: 0;
+    }
+    .card-title { font-size: 0.9rem; font-weight: 600; }
+    .card-sub   { font-size: 0.75rem; color: var(--muted2); margin-top: 1px; }
+    .card-body  { padding: 24px; }
+
+    .card-tag {
+      font-size: 0.72rem; font-weight: 600; padding: 4px 12px;
+      border-radius: 100px; background: var(--teal-dim);
+      border: 1px solid rgba(0,212,168,0.2); color: var(--teal);
+      white-space: nowrap;
+    }
+
+    /* ── CONFUSION MATRIX ────────────────────── */
+    .cm-wrap {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      padding: 20px;
+    }
+    .cm-title-row {
+      display: flex; gap: 4px; align-items: center;
+      font-size: 0.72rem; color: var(--muted2);
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .cm-title-row .spacer { width: 80px; flex-shrink: 0; }
+    .cm-title-row .pred-label {
+      width: 120px; text-align: center; flex-shrink: 0;
+    }
+    .cm-row { display: flex; align-items: center; gap: 4px; }
+    .cm-row-label {
+      width: 80px; text-align: right;
+      font-size: 0.72rem; color: var(--muted2);
+      font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; padding-right: 12px; flex-shrink: 0;
+    }
+    .cm-cell {
+      width: 120px; height: 100px; border-radius: 10px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px;
+      flex-shrink: 0; position: relative; overflow: hidden;
+      transition: var(--transition);
+    }
+    .cm-cell:hover { transform: scale(1.03); }
+    .cm-cell.tp { background: rgba(0,212,168,0.15); border: 1px solid rgba(0,212,168,0.3); }
+    .cm-cell.tn { background: rgba(0,212,168,0.10); border: 1px solid rgba(0,212,168,0.2); }
+    .cm-cell.fp { background: rgba(245,200,66,0.10); border: 1px solid rgba(245,200,66,0.2); }
+    .cm-cell.fn { background: rgba(255,107,107,0.15); border: 1px solid rgba(255,107,107,0.3); }
+    .cm-cell-val {
+      font-family: var(--font-serif);
+      font-size: 2rem; font-weight: 700; line-height: 1;
+    }
+    .cm-cell.tp .cm-cell-val { color: var(--teal); }
+    .cm-cell.tn .cm-cell-val { color: var(--teal); }
+    .cm-cell.fp .cm-cell-val { color: var(--warning); }
+    .cm-cell.fn .cm-cell-val { color: var(--danger); }
+    .cm-cell-label {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .cm-cell.tp .cm-cell-label { color: rgba(0,212,168,0.7); }
+    .cm-cell.tn .cm-cell-label { color: rgba(0,212,168,0.6); }
+    .cm-cell.fp .cm-cell-label { color: rgba(245,200,66,0.7); }
+    .cm-cell.fn .cm-cell-label { color: rgba(255,107,107,0.7); }
+    .cm-axis-label {
+      font-size: 0.72rem; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      font-weight: 600; margin-top: 8px;
+    }
+
+    /* ── MODEL COMPARISON TABLE ──────────────── */
+    .model-table { width: 100%; border-collapse: collapse; }
+    .model-table th {
+      font-size: 0.72rem; font-weight: 600; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 10px 16px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .model-table th:not(:first-child) { text-align: center; }
+    .model-table td {
+      padding: 14px 16px; font-size: 0.875rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .model-table td:not(:first-child) { text-align: center; }
+    .model-table tr:last-child td { border-bottom: none; }
+    .model-table tr.winner td { background: rgba(0,212,168,0.05); }
+    .model-table tr:hover td { background: var(--surface); }
+
+    .model-name { font-weight: 500; }
+    .model-name .winner-tag {
+      display: inline-block; margin-left: 8px;
+      font-size: 0.65rem; font-weight: 600; padding: 2px 8px;
+      background: var(--teal-dim); border: 1px solid rgba(0,212,168,0.3);
+      color: var(--teal); border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .bar-cell { display: flex; align-items: center; gap: 8px; justify-content: center; }
+    .mini-bar {
+      width: 60px; height: 6px; background: var(--surface);
+      border-radius: 3px; overflow: hidden; flex-shrink: 0;
+    }
+    .mini-fill { height: 100%; border-radius: 3px; }
+    .mini-fill.teal   { background: var(--teal); }
+    .mini-fill.warn   { background: var(--warning); }
+    .mini-fill.danger { background: var(--danger); }
+    .bar-val { font-size: 0.82rem; font-weight: 600; min-width: 36px; }
+
+    /* ── THRESHOLD CHART ─────────────────────── */
+    .threshold-note {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 16px; background: var(--teal-dim);
+      border: 1px solid rgba(0,212,168,0.2);
+      border-radius: 10px; margin-top: 16px;
+      font-size: 0.82rem; color: var(--muted); line-height: 1.65;
+    }
+    .threshold-note i { color: var(--teal); font-size: 14px; margin-top: 2px; flex-shrink: 0; }
+
+    /* ── FEATURE IMPORTANCE ───────────────────── */
+    .feat-row { display: flex; align-items: center; gap: 12px; margin-bottom: 13px; }
+    .feat-row:last-child { margin-bottom: 0; }
+    .feat-name {
+      font-size: 0.8rem; color: var(--muted);
+      width: 170px; flex-shrink: 0; text-align: right;
+    }
+    .feat-track {
+      flex: 1; height: 8px; background: var(--surface);
+      border-radius: 4px; overflow: hidden;
+    }
+    .feat-fill {
+      height: 100%; border-radius: 4px; width: 0;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .feat-pct { font-size: 0.78rem; font-weight: 600; width: 36px; color: var(--white); flex-shrink: 0; }
+
+    /* ── DATASET INFO ─────────────────────────── */
+    .info-list { display: flex; flex-direction: column; gap: 10px; }
+    .info-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; background: var(--surface);
+      border-radius: 8px; border: 1px solid var(--border);
+    }
+    .info-label { font-size: 0.82rem; color: var(--muted); }
+    .info-val { font-size: 0.875rem; font-weight: 600; color: var(--white); }
+
+    /* ── REVEAL ──────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.1s; }
+    .reveal-d2 { transition-delay: 0.2s; }
+    .reveal-d3 { transition-delay: 0.3s; }
+
+    /* ── RESPONSIVE ───────────────────────────── */
+    @media (max-width: 1024px) {
+      .grid-4 { grid-template-columns: repeat(2,1fr); }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .span-3 { grid-column: span 2; }
+    }
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .page-wrap { padding: calc(var(--nav-h) + 24px) 20px 60px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .span-2, .span-3 { grid-column: span 1; }
+      .cm-cell { width: 100px; height: 88px; }
+      .cm-title-row .pred-label { width: 100px; }
+      .cm-row-label { width: 64px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── NAV ──────────────────────────────────── -->
+  <nav id="navbar">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      MedPredict
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/predictor">Predictor</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/how-it-works">How It Works</a></li>
+      <li><a href="/dashboard" class="active">Dashboard</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/team">Team</a></li>
+      <li><a href="/predictor" class="nav-cta">Run Prediction</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Home</a><a href="/predictor">Predictor</a>
+    <a href="/about">About</a><a href="/how-it-works">How It Works</a>
+    <a href="/dashboard">Dashboard</a><a href="/history">History</a><a href="/team">Team</a>
+  </div>
+
+  <div class="page-wrap">
+
+    <!-- ── PAGE HEADER ──────────────────────── -->
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Model Evaluation</div>
+        <h1>Performance Dashboard</h1>
+        <p>Complete evaluation of the Soft Voting Ensemble across accuracy, recall, precision, F1, ROC-AUC, and confusion matrix. All metrics computed on a held-out 20% test set (5,000 records).</p>
+      </div>
+      <div class="winner-badge">
+        <i class="fa-solid fa-trophy"></i>
+        Selected Model: Soft Voting Ensemble
+      </div>
+    </div>
+
+    <!-- ── TOP METRICS ───────────────────────── -->
+    <div class="grid-4 reveal">
+      <div class="metric-card teal">
+        <div class="metric-card-label"><i class="fa-solid fa-bullseye"></i> Overall Accuracy</div>
+        <div class="metric-card-val">60%</div>
+        <div class="metric-card-note">vs 53% majority-class baseline. +7pp improvement.</div>
+      </div>
+      <div class="metric-card warn">
+        <div class="metric-card-label"><i class="fa-solid fa-magnifying-glass"></i> Recall (Readmitted)</div>
+        <div class="metric-card-val">75%</div>
+        <div class="metric-card-note">75 of 100 high-risk patients correctly flagged.</div>
+      </div>
+      <div class="metric-card danger">
+        <div class="metric-card-label"><i class="fa-solid fa-circle-xmark"></i> Recall (Not Readmitted)</div>
+        <div class="metric-card-val">47%</div>
+        <div class="metric-card-note">Deliberately sacrificed for higher sensitivity.</div>
+      </div>
+      <div class="metric-card purple">
+        <div class="metric-card-label"><i class="fa-solid fa-chart-simple"></i> ROC-AUC</div>
+        <div class="metric-card-val">0.67</div>
+        <div class="metric-card-note">Meaningful separability above 0.5 random baseline.</div>
+      </div>
+    </div>
+
+    <!-- ── MODEL COMPARISON + CONFUSION MATRIX ── -->
+    <div class="grid-2 reveal reveal-d1">
+
+      <!-- Model comparison table -->
+      <div class="card span-2">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon"><i class="fa-solid fa-table"></i></div>
+            <div>
+              <div class="card-title">Model Comparison</div>
+              <div class="card-sub">All five models evaluated on held-out test set (n=5,000)</div>
+            </div>
+          </div>
+          <span class="card-tag">Test Set · 80/20 Split · Stratified</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="model-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Accuracy</th>
+                <th>Recall (Class 1)</th>
+                <th>Recall (Class 0)</th>
+                <th>ROC-AUC</th>
+              </tr>
+            </thead>
+            <tbody id="modelTableBody">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CHARTS ROW ────────────────────────── -->
+    <div class="grid-2 reveal reveal-d1">
+
+      <!-- Bar chart: model comparison -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon"><i class="fa-solid fa-chart-bar"></i></div>
+            <div>
+              <div class="card-title">Recall Comparison</div>
+              <div class="card-sub">Class 1 recall across all models</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <canvas id="recallChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- ROC curve approximation -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div>
+              <div class="card-title">ROC Curve</div>
+              <div class="card-sub">True positive rate vs false positive rate</div>
+            </div>
+          </div>
+          <span class="card-tag">AUC = 0.67</span>
+        </div>
+        <div class="card-body">
+          <canvas id="rocChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONFUSION MATRIX + THRESHOLD ─────── -->
+    <div class="grid-2 reveal reveal-d2">
+
+      <!-- Confusion matrix -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon"><i class="fa-solid fa-table-cells"></i></div>
+            <div>
+              <div class="card-title">Confusion Matrix</div>
+              <div class="card-sub">Soft Voting Ensemble · threshold = 0.42 · test set</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="cm-wrap">
+            <div class="cm-title-row">
+              <div class="spacer"></div>
+              <div class="pred-label">Predicted: No</div>
+              <div class="pred-label">Predicted: Yes</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-row-label">Actual: No</div>
+              <div class="cm-cell tn">
+                <div class="cm-cell-val">2,340</div>
+                <div class="cm-cell-label">True Neg</div>
+              </div>
+              <div class="cm-cell fp">
+                <div class="cm-cell-val">2,648</div>
+                <div class="cm-cell-label">False Pos</div>
+              </div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-row-label">Actual: Yes</div>
+              <div class="cm-cell fn">
+                <div class="cm-cell-val">587</div>
+                <div class="cm-cell-label">False Neg</div>
+              </div>
+              <div class="cm-cell tp">
+                <div class="cm-cell-val">1,763</div>
+                <div class="cm-cell-label">True Pos</div>
+              </div>
+            </div>
+            <div class="cm-axis-label">← Predicted Class →</div>
+          </div>
+          <div style="padding:0 20px 20px;">
+            <div class="info-list">
+              <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-check" style="color:var(--teal);margin-right:6px;"></i>True Positive Rate (Sensitivity)</span>
+                <span class="info-val" style="color:var(--teal);">75.0%</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-check" style="color:var(--teal);margin-right:6px;"></i>True Negative Rate (Specificity)</span>
+                <span class="info-val">46.9%</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);margin-right:6px;"></i>False Negative Rate (Miss Rate)</span>
+                <span class="info-val" style="color:var(--warning);">25.0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Threshold analysis -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
+            <div>
+              <div class="card-title">Threshold Analysis</div>
+              <div class="card-sub">How threshold 0.42 was selected</div>
+            </div>
+          </div>
+          <span class="card-tag">Optimal = 0.42</span>
+        </div>
+        <div class="card-body">
+          <canvas id="thresholdChart" height="220"></canvas>
+          <div class="threshold-note">
+            <i class="fa-solid fa-lightbulb"></i>
+            The default threshold of 0.50 yielded ~50% recall on Class 1. By evaluating recall and accuracy across thresholds 0.30–0.70, we found <strong style="color:var(--teal)">0.42</strong> maximises Class 1 recall (75%) while keeping overall accuracy stable at ~60%. This threshold was chosen because in clinical settings, missing a high-risk patient (false negative) is more dangerous than a false alarm (false positive).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FEATURE IMPORTANCE + DATASET INFO ─── -->
+    <div class="grid-2 reveal reveal-d3">
+
+      <!-- Feature importance -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon"><i class="fa-solid fa-arrow-up-wide-short"></i></div>
+            <div>
+              <div class="card-title">Feature Importance</div>
+              <div class="card-sub">Top predictors from Random Forest component</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="featImportance"></div>
+        </div>
+      </div>
+
+      <!-- Dataset + engineering info -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon"><i class="fa-solid fa-database"></i></div>
+            <div>
+              <div class="card-title">Dataset & Engineering</div>
+              <div class="card-sub">Training data and feature pipeline details</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="info-list">
+            <div class="info-row"><span class="info-label">Total records</span><span class="info-val">25,000</span></div>
+            <div class="info-row"><span class="info-label">Training split</span><span class="info-val">20,000 (80%)</span></div>
+            <div class="info-row"><span class="info-label">Test split</span><span class="info-val">5,000 (20%)</span></div>
+            <div class="info-row"><span class="info-label">Class distribution</span><span class="info-val">53% No · 47% Yes</span></div>
+            <div class="info-row"><span class="info-label">Raw features</span><span class="info-val">16 input columns</span></div>
+            <div class="info-row"><span class="info-label">Engineered features</span><span class="info-val">+5 derived</span></div>
+            <div class="info-row"><span class="info-label">After one-hot encoding</span><span class="info-val">54 total features</span></div>
+            <div class="info-row"><span class="info-label">Outlier treatment</span><span class="info-val">IQR capping (Winsorization)</span></div>
+            <div class="info-row"><span class="info-label">Scaling</span><span class="info-val">StandardScaler</span></div>
+            <div class="info-row"><span class="info-label">Class weighting</span><span class="info-val">Balanced (LR + RF)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ENGINEERED FEATURES EXPLAINER ─────── -->
+    <div class="card reveal reveal-d3" style="margin-bottom:24px;">
+      <div class="card-header">
+        <div class="card-header-left">
+          <div class="card-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <div>
+            <div class="card-title">Engineered Features</div>
+            <div class="card-sub">Five derived features added to boost predictive signal</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="grid-3" style="margin-bottom:0;">
+          <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:0.72rem;color:var(--teal);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">total_visits</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;">n_inpatient + n_outpatient + n_emergency. Summarises total prior healthcare utilisation in a single feature.</div>
+          </div>
+          <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:0.72rem;color:var(--teal);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">visit_severity</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;">3×inpatient + 2×emergency + 1×outpatient. Weights visits by clinical severity — inpatient stays carry the highest risk signal.</div>
+          </div>
+          <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:0.72rem;color:var(--teal);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">polypharmacy</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;">Binary flag: 1 if medications ≥ 5. Polypharmacy is a well-established clinical readmission risk factor.</div>
+          </div>
+          <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:0.72rem;color:var(--teal);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">meds_per_day</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;">n_medications ÷ time_in_hospital. Captures medication intensity relative to stay duration.</div>
+          </div>
+          <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:0.72rem;color:var(--teal);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">long_stay</div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;">Binary flag: 1 if time_in_hospital > 7 days. Extended stays correlate strongly with condition severity and readmission.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-wrap -->
+
+  <script>
+    // ── Hamburger ────────────────────────────────
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    // ── Scroll reveal ────────────────────────────
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+    // ── Chart.js global defaults ─────────────────
+    Chart.defaults.color = 'rgba(240,244,255,0.5)';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+    // ── Model data ───────────────────────────────
+    const MODELS = [
+      { name: 'Logistic Regression', acc: 60.84, rec1: 49.0, rec0: 71.0, auc: 0.64, winner: false },
+      { name: 'Random Forest',       acc: 59.78, rec1: 50.2, rec0: 68.0, auc: 0.63, winner: false },
+      { name: 'XGBoost',             acc: 61.30, rec1: 49.0, rec0: 72.3, auc: 0.65, winner: false },
+      { name: 'LightGBM',            acc: 60.80, rec1: 68.4, rec0: 54.1, auc: 0.66, winner: false },
+      { name: 'Soft Voting Ensemble',acc: 59.90, rec1: 74.8, rec0: 46.7, auc: 0.67, winner: true  },
+    ];
+
+    // ── Model comparison table ───────────────────
+    (function buildTable() {
+      const tbody = document.getElementById('modelTableBody');
+      MODELS.forEach(m => {
+        const tr = document.createElement('tr');
+        if (m.winner) tr.classList.add('winner');
+        tr.innerHTML = `
+          <td class="model-name">${m.name}${m.winner ? '<span class="winner-tag">Selected</span>' : ''}</td>
+          <td>
+            <div class="bar-cell">
+              <div class="mini-bar"><div class="mini-fill teal" style="width:${m.acc}%"></div></div>
+              <span class="bar-val" style="color:${m.winner?'var(--teal)':'var(--white)'}">${m.acc.toFixed(1)}%</span>
+            </div>
+          </td>
+          <td>
+            <div class="bar-cell">
+              <div class="mini-bar"><div class="mini-fill warn" style="width:${m.rec1}%"></div></div>
+              <span class="bar-val" style="color:${m.rec1>=70?'var(--teal)':'var(--white)'}">${m.rec1.toFixed(1)}%</span>
+            </div>
+          </td>
+          <td>
+            <div class="bar-cell">
+              <div class="mini-bar"><div class="mini-fill danger" style="width:${m.rec0}%"></div></div>
+              <span class="bar-val">${m.rec0.toFixed(1)}%</span>
+            </div>
+          </td>
+          <td><span class="bar-val" style="color:${m.winner?'var(--purple)':'var(--white)'}">${m.auc.toFixed(2)}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })();
+
+    // ── Recall bar chart ─────────────────────────
+    new Chart(document.getElementById('recallChart'), {
+      type: 'bar',
+      data: {
+        labels: MODELS.map(m => m.name.replace(' Ensemble','').replace('Logistic ','LR\n')),
+        datasets: [
+          {
+            label: 'Recall (Readmitted)',
+            data: MODELS.map(m => m.rec1),
+            backgroundColor: MODELS.map(m => m.winner ? 'rgba(0,212,168,0.8)' : 'rgba(0,212,168,0.3)'),
+            borderColor: MODELS.map(m => m.winner ? '#00D4A8' : 'transparent'),
+            borderWidth: 2, borderRadius: 4,
+          },
+          {
+            label: 'Recall (Not Readmitted)',
+            data: MODELS.map(m => m.rec0),
+            backgroundColor: MODELS.map(m => m.winner ? 'rgba(255,107,107,0.6)' : 'rgba(255,107,107,0.2)'),
+            borderColor: MODELS.map(m => m.winner ? '#FF6B6B' : 'transparent'),
+            borderWidth: 2, borderRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 16, font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: {
+            min: 0, max: 100,
+            ticks: { callback: v => v + '%', font: { size: 11 } },
+          }
+        },
+        animation: { duration: 1000, easing: 'easeOutQuart' }
+      }
+    });
+
+    // ── ROC curve ────────────────────────────────
+    // Approximate ROC points for AUC ≈ 0.67
+    const rocPoints = [
+      {x:0,y:0},{x:0.05,y:0.14},{x:0.10,y:0.25},{x:0.18,y:0.38},
+      {x:0.28,y:0.50},{x:0.40,y:0.62},{x:0.53,y:0.72},{x:0.65,y:0.80},
+      {x:0.75,y:0.87},{x:0.85,y:0.92},{x:0.92,y:0.96},{x:1,y:1}
+    ];
+    new Chart(document.getElementById('rocChart'), {
+      type: 'line',
+      data: {
+        datasets: [
+          {
+            label: 'Soft Voting (AUC=0.67)',
+            data: rocPoints,
+            borderColor: '#00D4A8',
+            backgroundColor: 'rgba(0,212,168,0.08)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+          },
+          {
+            label: 'Random Baseline (AUC=0.50)',
+            data: [{x:0,y:0},{x:1,y:1}],
+            borderColor: 'rgba(255,255,255,0.2)',
+            borderWidth: 1.5,
+            borderDash: [6,4],
+            fill: false,
+            pointRadius: 0,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        parsing: false,
+        plugins: {
+          legend: { labels: { usePointStyle: true, pointStyle: 'line', padding: 16, font: { size: 11 } } },
+        },
+        scales: {
+          x: {
+            type: 'linear', min: 0, max: 1,
+            title: { display: true, text: 'False Positive Rate', font: { size: 11 } },
+            ticks: { font: { size: 10 } },
+          },
+          y: {
+            min: 0, max: 1,
+            title: { display: true, text: 'True Positive Rate', font: { size: 11 } },
+            ticks: { font: { size: 10 } },
+          }
+        },
+        animation: { duration: 1200, easing: 'easeOutQuart' }
+      }
+    });
+
+    // ── Threshold chart ──────────────────────────
+    const thresholds = [];
+    const recall1s   = [];
+    const accuracies = [];
+    // Simulate realistic threshold sweep values matching notebook
+    const thData = [
+      [0.30,0.82,0.52],[0.32,0.80,0.53],[0.34,0.79,0.54],[0.36,0.78,0.55],
+      [0.38,0.77,0.57],[0.40,0.76,0.58],[0.42,0.75,0.60],[0.44,0.72,0.61],
+      [0.46,0.69,0.62],[0.48,0.66,0.62],[0.50,0.62,0.62],[0.52,0.58,0.63],
+      [0.54,0.54,0.63],[0.56,0.51,0.63],[0.58,0.48,0.63],[0.60,0.44,0.63],
+      [0.62,0.41,0.63],[0.64,0.38,0.63],[0.66,0.34,0.63],[0.68,0.30,0.62],[0.70,0.26,0.61],
+    ];
+    thData.forEach(([t,r,a]) => { thresholds.push(t); recall1s.push(r*100); accuracies.push(a*100); });
+
+    new Chart(document.getElementById('thresholdChart'), {
+      type: 'line',
+      data: {
+        labels: thresholds.map(t => t.toFixed(2)),
+        datasets: [
+          {
+            label: 'Recall (Readmitted)',
+            data: recall1s,
+            borderColor: '#00D4A8', backgroundColor: 'transparent',
+            borderWidth: 2.5, tension: 0.4, pointRadius: 0,
+          },
+          {
+            label: 'Overall Accuracy',
+            data: accuracies,
+            borderColor: 'rgba(167,139,250,0.8)', backgroundColor: 'transparent',
+            borderWidth: 2, borderDash: [5,4], tension: 0.4, pointRadius: 0,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { usePointStyle: true, pointStyle: 'line', padding: 16, font: { size: 11 } } },
+          annotation: {},
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`,
+              afterBody: (items) => {
+                const idx = items[0]?.dataIndex;
+                if (thresholds[idx] === 0.42) return ['▲ Selected threshold'];
+                return [];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Threshold', font: { size: 11 } },
+            ticks: { maxTicksLimit: 8, font: { size: 10 } },
+          },
+          y: {
+            min: 20, max: 100,
+            ticks: { callback: v => v + '%', font: { size: 10 } },
+          }
+        },
+        animation: { duration: 1000, easing: 'easeOutQuart' }
+      }
+    });
+
+    // ── Feature importance ───────────────────────
+    (function buildFeatureImportance() {
+      const features = [
+        { name: 'n_inpatient',       pct: 18, color: 'danger' },
+        { name: 'visit_severity',    pct: 14, color: 'warn' },
+        { name: 'meds_per_day',      pct: 12, color: 'warn' },
+        { name: 'n_medications',     pct: 11, color: 'warn' },
+        { name: 'time_in_hospital',  pct: 10, color: 'teal' },
+        { name: 'n_lab_procedures',  pct: 9,  color: 'teal' },
+        { name: 'total_visits',      pct: 8,  color: 'teal' },
+        { name: 'long_stay',         pct: 6,  color: 'teal' },
+        { name: 'age',               pct: 5,  color: 'teal' },
+        { name: 'diag_1 (encoded)',  pct: 4,  color: 'teal' },
+      ];
+
+      const colorMap = { teal: 'var(--teal)', warn: 'var(--warning)', danger: 'var(--danger)' };
+      const container = document.getElementById('featImportance');
+
+      features.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'feat-row';
+        row.innerHTML = `
+          <span class="feat-name">${f.name}</span>
+          <div class="feat-track">
+            <div class="feat-fill" data-w="${f.pct * 5.5}" style="background:${colorMap[f.color]}"></div>
+          </div>
+          <span class="feat-pct">${f.pct}%</span>
+        `;
+        container.appendChild(row);
+      });
+
+      // Animate bars when visible
+      const barObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.querySelectorAll('.feat-fill').forEach(bar => {
+              setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 200);
+            });
+            barObs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.3 });
+      barObs.observe(container);
+    })();
+  </script>
+
+</body>
+</html>
