@@ -1,17 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "Dockerfile",
-      "use": "@vercel/docker"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
-  ],
+  "public": false,
   "env": {
     "FLASK_ENV": "production"
   }

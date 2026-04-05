@@ -12,7 +12,9 @@ npm-debug.log*
 .pytest_cache
 .coverage
 htmlcov
-.netlify
 netlify.toml
-Procfile
 functions/
+runtime.txt
+.github
+.gitlab-ci.yml
+.circleci
