@@ -11,4 +11,6 @@ node_modules
 .github
 .vscode
 *.md
+.coverage
+htmlcov
 .git/objects

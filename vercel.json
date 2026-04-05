@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "public": false,
-  "env": {
-    "FLASK_ENV": "production"
-  }
-}
