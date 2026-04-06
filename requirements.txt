@@ -8,3 +8,4 @@ joblib
 requests
 anthropic
 gunicorn
+pypdf
