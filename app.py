@@ -817,14 +817,30 @@ def parse_suhrc_pdf(pdf_bytes: bytes) -> dict:
             result['error'] = 'Could not extract text — PDF may be scanned or image-based.'
             return result
 
+        # ── VALIDATE: Check if this is actually a medical lab report ──
+        medical_keywords = ['hemoglobin', 'hb', 'rbc', 'glucose', 'platelets', 
+                           'haematology', 'clinical pathology', 'urine', 'laboratory',
+                           'bile', 'crystals', 'pus']
+        text_lower = full_text.lower()
+        found_keywords = sum(1 for kw in medical_keywords if kw in text_lower)
+        
+        if found_keywords < 3:
+            result['error'] = 'Invalid PDF. Please upload a valid medical lab report with hemoglobin, glucose, or other lab values.'
+            return result
+
         # ── Header fields (appear on every page, grab from full text) ──
-        uhid_m = re.search(r'UHID\s*:\s*(\S+)', full_text)
+        # Try to find UHID/ID field (may have different formats)
+        uhid_m = re.search(r'(?:UHID|ID|Patient ID|Report ID)\s*:\s*(\S+)', full_text, re.IGNORECASE)
         if uhid_m:
             result['uhid'] = uhid_m.group(1).strip()
-
-        gender_m = re.search(r'Gender/Age\s*:\s*(Male|Female)', full_text, re.IGNORECASE)
+        else:
+            # Generate a placeholder ID if not found
+            result['uhid'] = 'TEST_' + str(hash(full_text[:100]))[:8]
+        
+        gender_m = re.search(r'(?:Gender|Sex)/Age\s*:\s*(Male|Female|M|F)', full_text, re.IGNORECASE)
         if gender_m:
-            result['gender'] = gender_m.group(1).capitalize()
+            g = gender_m.group(1).upper()
+            result['gender'] = 'Male' if g in ['M', 'MALE'] else 'Female'
 
         # ── Parse each page by section type ──
         for text in pages_text:
@@ -1037,5 +1053,5 @@ def api_health_records():
 
 if __name__ == '__main__':
     import os
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8000))
     app.run(host='0.0.0.0', port=port, debug=False)

@@ -211,6 +211,8 @@
       display: flex; align-items: center; gap: 16px;
       flex-wrap: wrap;
       animation: fadeUp 0.6s ease 0.3s both;
+      position: relative;
+      z-index: 10;
     }
 
     .btn-primary {
@@ -245,15 +247,7 @@
       transform: translateY(-2px);
     }
 
-    /* EKG canvas */
-    .ekg-wrap {
-      position: absolute; bottom: 60px; left: 0; right: 0;
-      height: 80px; opacity: 0.35;
-      animation: fadeUp 1s ease 0.5s both;
-      pointer-events: none;
-    }
-
-    #ekgCanvas { width: 100%; height: 100%; }
+    /* EKG canvas - REMOVED */
 
     /* ─── STATS BAR ─────────────────────────────────── */
     .stats-bar {
@@ -695,8 +689,8 @@
 
     @media (max-width: 768px) {
       nav { padding: 0 20px; }
-      .nav-links { display: none; }
-      .hamburger { display: flex; }
+      .nav-links { display: flex !important; }
+      .hamburger { display: none; }
       .hero { padding: calc(var(--nav-h) + 30px) 24px 40px; }
       .hero h1 { font-size: 2.4rem; }
       section { padding: 60px 24px; }
@@ -726,14 +720,13 @@
     <ul class="nav-links">
       <li><a href="/" class="active">Home</a></li>
       <li><a href="/predictor">Predictor</a></li>
-      <li><a href="/compare">Compare</a></li>
-      <li><a href="/about">About</a></li>
-      <li><a href="/how-it-works">How It Works</a></li>
-      <li><a href="/dashboard">Dashboard</a></li>
-      <li><a href="/history">History</a></li>
-      <li><a href="/demo">Demo</a></li>
-      <li><a href="/team">Team</a></li>
       <li><a href="/health-check">Health Check</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/compare">Compare</a></li>
+      <li><a href="/how-it-works">How It Works</a></li>
+      <li><a href="/demo">Demo</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/team">Team</a></li>
       <li><a href="/predictor" class="nav-cta">Run Prediction</a></li>
     </ul>
 
@@ -743,17 +736,18 @@
   </nav>
 
   <!-- Mobile menu -->
-  <div class="mobile-menu" id="mobileMenu">
-    <a href="/">Home</a>
-    <a href="/predictor">Predictor</a>
-    <a href="/compare">Compare</a>
-    <a href="/about">About</a>
-    <a href="/how-it-works">How It Works</a>
-    <a href="/dashboard">Dashboard</a>
-    <a href="/history">History</a>
-    <a href="/demo">Demo</a>
-    <a href="/team">Team</a>
-  </div>
+  <ul class="nav-links">
+      <li><a href="/" class="active">Home</a></li>
+      <li><a href="/predictor">Predictor</a></li>
+      <li><a href="/health-check">Health Check</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/compare">Compare</a></li>
+      <li><a href="/how-it-works">How It Works</a></li>
+      <li><a href="/demo">Demo</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/team">Team</a></li>
+      <li><a href="/predictor" class="nav-cta">Run Prediction</a></li>
+    </ul>
 
   <!-- ─── HERO ───────────────────────────────────── -->
   <section class="hero" id="hero">
@@ -784,10 +778,7 @@
       </a>
     </div>
 
-    <!-- Animated EKG -->
-    <div class="ekg-wrap">
-      <canvas id="ekgCanvas"></canvas>
-    </div>
+    <!-- Animated EKG - REMOVED -->
   </section>
 
   <!-- ─── STATS BAR ──────────────────────────────── -->
@@ -1086,61 +1077,6 @@
     }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
 
     document.querySelectorAll('.model-diagram').forEach(el => barObserver.observe(el));
-
-    // ── EKG canvas animation ──────────────────────
-    const canvas = document.getElementById('ekgCanvas');
-    const ctx    = canvas.getContext('2d');
-    let offset   = 0;
-
-    function resizeCanvas() {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // One EKG complex: flat → small bump → spike → dip → bump → flat
-    function ekgY(x, w) {
-      const t = ((x % w) / w);
-      if (t < 0.10) return 0;
-      if (t < 0.15) return -0.15 * Math.sin((t - 0.10) / 0.05 * Math.PI);
-      if (t < 0.20) return 0;
-      if (t < 0.23) return -(t - 0.20) / 0.03 * 0.8;
-      if (t < 0.26) return -0.8 + (t - 0.23) / 0.03 * 1.8;
-      if (t < 0.29) return 1.0 - (t - 0.26) / 0.03 * 1.0;
-      if (t < 0.34) return -(t - 0.29) / 0.05 * 0.3;
-      if (t < 0.40) return -0.3 + (t - 0.34) / 0.06 * 0.3;
-      return 0;
-    }
-
-    function drawEKG() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const h    = canvas.height;
-      const w    = canvas.width;
-      const amp  = h * 0.38;
-      const mid  = h * 0.5;
-      const segW = 280; // one heartbeat cycle width
-
-      ctx.beginPath();
-      ctx.strokeStyle = '#00D4A8';
-      ctx.lineWidth   = 1.8;
-      ctx.shadowColor = '#00D4A8';
-      ctx.shadowBlur  = 6;
-
-      for (let x = 0; x <= w; x++) {
-        const xShifted = (x - offset % segW + segW * 10) % (segW * 2);
-        const y = mid + ekgY(xShifted, segW) * amp;
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    function animateEKG() {
-      offset += 2;
-      drawEKG();
-      requestAnimationFrame(animateEKG);
-    }
-    animateEKG();
 
     // ── Fallback reveal (safety net for all browsers) ──
     setTimeout(() => {
