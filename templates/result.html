@@ -446,8 +446,10 @@
           Prediction Complete
         </div>
         <h1 class="result-verdict {{ 'high' if risk_level == 'High' else ('moderate' if risk_level == 'Moderate' else 'low') }}">
-          {% if prediction == 1 %}
+          {% if risk_level == 'High' %}
             High readmission risk detected.
+          {% elif risk_level == 'Moderate' %}
+            Moderate readmission risk detected.
           {% else %}
             Low readmission risk detected.
           {% endif %}
